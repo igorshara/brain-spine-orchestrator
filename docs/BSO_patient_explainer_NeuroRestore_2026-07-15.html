@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brain-Spine Orchestrator — a patient's explainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 15mm 0 14mm 0; }
+  @page :first { margin-top: 0; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  :root{
+    --ink:#0b1220; --ink2:#0c1320; --navy:#111c30;
+    --cyan:#22d3ee; --teal:#0c8ea6; --emerald:#34d399; --emerald-deep:#159c6f;
+    --amber:#f5b34a; --amber-deep:#bd7c15;
+    --paper:#ffffff; --mist:#f1f7f8; --line:#dce6ea; --body:#1b2733; --mut:#5f7182;
+    --grad: linear-gradient(135deg,#22d3ee,#34d399);
+    --grad-b: linear-gradient(135deg,#56b6ff,#22d3ee);
+  }
+  body{ font-family:"Inter","Arial",sans-serif; color:var(--body); font-size:10.3pt; line-height:1.52; margin:0; }
+  .wrap{ padding:0 15mm; }
+  h1,h2,h3,.wordmark,.role,.num,.help .lbl,.note .lbl,.badge{ font-family:"Space Grotesk","Arial",sans-serif; }
+
+  /* ---------- header band ---------- */
+  .band{ background:var(--ink); color:#eaf3f7; padding:17mm 15mm 12mm; position:relative; }
+  .band::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:4px; background:var(--grad); }
+  .brandrow{ display:flex; align-items:center; gap:13px; margin-bottom:15px; }
+  .wordmark{ font-size:15pt; font-weight:700; letter-spacing:1.2px; }
+  .wordmark .g{ background:var(--grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .tagline{ color:#8fa6b5; font-size:9pt; letter-spacing:.2px; margin-top:2px; font-family:"Space Grotesk",sans-serif; }
+  .band h1{ font-size:23pt; margin:0 0 5px; color:#fff; letter-spacing:-.3px; font-weight:700; }
+  .band .sub{ color:#a9c0cd; font-size:10.6pt; margin:0; max-width:150mm; }
+
+  .meta{ color:var(--mut); font-size:8.4pt; padding:8px 0 0; margin:9px 0 2px; }
+  .meta b{ color:var(--body); }
+
+  h2{ display:flex; align-items:center; gap:11px; font-size:13pt; color:var(--ink); margin:23px 0 9px;
+      padding-bottom:6px; border-bottom:1px solid var(--line); font-weight:600; }
+  .num{ flex:none; width:23px; height:23px; border-radius:7px; background:var(--grad); color:#04110d;
+        font-size:12pt; font-weight:700; display:grid; place-items:center; }
+  h3{ font-size:11pt; margin:0 0 4px; color:var(--ink); font-weight:600; }
+  p{ margin:6px 0; }
+  ul{ margin:6px 0; padding-left:18px; } li{ margin:3px 0; }
+  .lab{ font-weight:700; color:#26333f; }
+  b{ color:#0f1a26; }
+
+  /* ---------- hero statement (dark, branded) ---------- */
+  .hero{ background:var(--ink2); color:#d7e7ee; border-radius:11px; padding:15px 18px; margin:16px 0;
+         position:relative; overflow:hidden; }
+  .hero::before{ content:""; position:absolute; top:0; left:0; right:0; height:4px; background:var(--grad); }
+  .hero b{ color:#fff; } .hero .c{ color:var(--cyan); font-weight:700; }
+
+  /* ---------- honesty note ---------- */
+  .note{ background:#fff8ee; border:1px solid #f1ddbb; border-radius:10px; padding:12px 15px; margin:14px 0; overflow:hidden; position:relative; font-size:9.9pt; }
+  .note::before{ content:""; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(135deg,#f5b34a,#e0902f); }
+  .note .lbl{ display:block; font-size:8.4pt; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--amber-deep); margin-bottom:3px; }
+
+  /* ---------- callout (light branded, no left border) ---------- */
+  .call{ background:var(--mist); border:1px solid var(--line); border-radius:10px; padding:13px 16px; margin:13px 0; position:relative; overflow:hidden; }
+  .call::before{ content:""; position:absolute; top:0; left:0; right:0; height:3px; background:var(--grad); }
+  .call.big{ font-size:10.6pt; }
+
+  /* ---------- layer cards ---------- */
+  .card{ border:1px solid var(--line); border-radius:11px; margin:11px 0; overflow:hidden; page-break-inside:avoid; }
+  .accbar{ height:4px; background:var(--grad); }
+  .accbar.amber{ background:linear-gradient(135deg,#f5b34a,#df8b2b); }
+  .ch{ background:var(--mist); border-bottom:1px solid var(--line); padding:7px 16px; }
+  .role{ font-size:8.4pt; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--teal); }
+  .role.amber{ color:var(--amber-deep); }
+  .cb{ padding:12px 16px 14px; }
+
+  .help{ background:#eefaf5; border:1px solid #c9eadd; border-radius:9px; padding:9px 13px 10px; margin-top:10px; }
+  .help .lbl{ font-size:8.4pt; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--emerald-deep); display:inline-flex; align-items:center; gap:7px; margin-right:5px; }
+  .help .lbl::before{ content:""; width:8px; height:8px; border-radius:2px; background:var(--grad); display:inline-block; }
+  .help b{ color:var(--emerald-deep); }
+
+  /* ---------- architecture diagram ---------- */
+  .archwrap{ border-radius:11px; overflow:hidden; margin:12px 0; }
+  .arch{ font-family:"SF Mono",Menlo,monospace; font-size:8pt; background:var(--ink); color:#bfe9f0;
+         padding:14px 16px; white-space:pre; line-height:1.42; margin:0; }
+  .cap{ font-size:9.4pt; color:var(--mut); margin:8px 0 0; }
+
+  /* ---------- table ---------- */
+  table{ border-collapse:collapse; width:100%; margin:10px 0; font-size:9.1pt; }
+  th,td{ border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top; }
+  th{ background:var(--ink); color:#eaf3f7; font-weight:600; font-family:"Space Grotesk",sans-serif; font-size:8.8pt; letter-spacing:.2px; }
+  tr:nth-child(even) td{ background:#f6fafb; }
+  .tag{ font-weight:700; font-size:8pt; padding:2px 7px; border-radius:20px; white-space:nowrap; font-family:"Space Grotesk",sans-serif; }
+  .real{ background:#d8f4e6; color:#137a4c; }
+  .toy{ background:#fde3e3; color:#b32626; }
+  .algo{ background:#d7f2f8; color:#0c7d92; }
+
+  code{ font-family:"SF Mono",Menlo,monospace; font-size:8.6pt; background:#eef4f6; padding:.5px 5px; border-radius:4px; color:#0c5566; }
+  a{ color:var(--teal); font-weight:600; }
+  .demo{ display:inline-block; font-family:"Space Grotesk",sans-serif; font-size:11pt; font-weight:600;
+         color:var(--ink); background:var(--mist); border:1px solid var(--line); border-radius:9px;
+         padding:9px 15px; margin:6px 0; position:relative; }
+  .demo::before{ content:"▸"; color:var(--teal); margin-right:9px; }
+
+  .foot{ margin:22px 0 0; padding-top:12px; border-top:1px solid var(--line); position:relative; font-size:8.7pt; color:var(--mut); }
+  .foot::before{ content:""; position:absolute; top:-1px; left:0; width:70px; height:3px; background:var(--grad); }
+  .foot .k{ font-family:"Space Grotesk",sans-serif; color:var(--ink); font-weight:700; font-size:9.4pt; }
+  .nobreak{ page-break-inside:avoid; }
+</style>
+</head>
+<body>
+
+<div class="band">
+  <div class="brandrow">
+    <svg width="46" height="46" viewBox="0 0 48 48" fill="none" aria-label="BSO logo">
+      <defs><linearGradient id="lg" x1="0" y1="0" x2="48" y2="48">
+        <stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#34d399"/></linearGradient></defs>
+      <rect x="2" y="2" width="44" height="44" rx="13" fill="#0c1320" stroke="url(#lg)" stroke-width="1.6"/>
+      <circle cx="18" cy="13" r="2.4" fill="url(#lg)"/><circle cx="30" cy="13" r="2.4" fill="url(#lg)" opacity=".55"/>
+      <circle cx="24" cy="20" r="2.4" fill="url(#lg)"/>
+      <circle cx="18" cy="27" r="2.4" fill="url(#lg)" opacity=".55"/><circle cx="30" cy="27" r="2.4" fill="url(#lg)"/>
+      <circle cx="24" cy="34" r="2.4" fill="url(#lg)"/>
+      <path d="M8 41 H17 L20 33 L24 44 L28 38 H40" stroke="url(#lg)" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <div class="wordmark">BRAIN·SPINE <span class="g">ORCHESTRATOR</span></div>
+      <div class="tagline">Adaptive stimulation-side orchestration for brain–spine interfaces · research simulator</div>
+    </div>
+  </div>
+  <h1>A patient's explainer</h1>
+  <p class="sub">What each part of the program is, what it does, and how it is meant to help a patient like me walk again.</p>
+</div>
+
+<div class="wrap">
+<p class="meta"><b>Concept &amp; author:</b> Ihor Sharanda — patient (Th5–Th6, complete), Lviv, Ukraine · Advisor, First Lviv Territorial Medical Union (1TMO) / Unbroken National Rehabilitation Center · <b>Date:</b> 15 July 2026 · <b>Live demo:</b> brain-spine-orchestrator-production.up.railway.app</p>
+
+<div class="hero">
+<b>In one honest sentence.</b> This is <span class="c">not</span> a medical device and <span class="c">not</span> a finished neuroprosthesis. It is a working, safety-first <b>software “conductor”</b> — a research simulator (a digital twin) that sits between the intent decoder (the brain) and the spinal stimulator (EES). It takes a simple wish to move — “stand”, “take a step”, “climb” — and turns it into the coordinated, precisely-timed stimulation of many muscle groups at once, adjusts it in real time from the body’s feedback, and is physically incapable of leaving the safety limits. I built it as a patient, to understand your field deeply enough to be useful — not to replace the science, but to explore the orchestration that would sit on top of it.
+</div>
+
+<div class="note">
+<span class="lbl">My promise of honesty</span>
+Every number in this program (currents, timings, angles) is a physiologically <i>plausible placeholder</i>, clearly marked in the code as illustrative and <b>not clinically validated</b>. Where a part is real working software I say so; where it is a stand-in for something only your team and a hardware platform can provide, I say that too. I make no medical claims. I am not asking to be a trial patient. I am simply showing you what I have made, and asking how I might help.
+</div>
+
+<h2><span class="num">1</span>The problem this program is built around</h2>
+<p>A spinal cord injury like mine does not damage the brain. My intention to move is intact — the wish to lift my foot is still there, exactly as it always was. What is broken is the <span class="lab">cable</span>: the pathway that carries that wish down past the injury to the muscles of the legs. Below the injury, the muscles and the local spinal circuits are often still alive and able to work — they are simply no longer receiving the message.</p>
+<p>Your team’s work showed the world that this gap can be <span class="lab">bridged</span> — that a decoder can read the intention from the brain, and epidural electrical stimulation (EES) can wake up the spinal circuits below the injury so that walking becomes possible again. That is the miracle. My program does not try to repeat it. It asks a narrower, engineering question:</p>
+<div class="call big">
+<b>Once the intention has been read, how do you conduct the stimulation?</b> A single step uses dozens of muscles firing in a precise order, adjusting continuously to balance, fatigue and terrain. Something has to translate “walk” into that living, changing pattern — and never, under any circumstance, deliver an unsafe command. That “something” is what I built: the orchestration layer.</div>
+
+<h2><span class="num">2</span>The whole program at a glance</h2>
+<p>Think of it as an orchestra. The <span class="lab">brain</span> is the composer who decides what music to play. The program is the <span class="lab">conductor and the musicians</span> who turn that decision into every note, in time, together — while a <span class="lab">safety guardian</span> watches every single note and can silence any one of them instantly. Data flows down (intention → movement) and back up (the body reports what actually happened):</p>
+
+<div class="archwrap"><pre class="arch">        ┌────────────────────────────────────────────────────────┐
+        │   LAYER 5 · SAFETY GUARDIAN  (vetoes every command)     │
+        └──────────▲────────────────────────────▲────────────────┘
+                   │ checks every command        │
+  LAYER 0        LAYER 1            LAYER 2              simulated
+  Decoder  ──►  Orchestrator ──►  Effectors  ──► command ──► body
+ (the wish)    (the conductor)   (the players)              (digital twin)
+     ▲              ▲                 ▲                        │
+     │              │                 │   the body reports back │
+     │          LAYER 3 · Feedback / balance sense ◄────────────┘
+     │              │
+     │          LAYER 4 · Adaptation (learns slowly, between sessions)
+     │              │
+     └──── Supervisory AI layer: planning &amp; reports (never in the live loop)</pre></div>
+<p class="cap">On the pages that follow, each layer is explained on its own: <b>what it is</b> in plain words, <b>what it does</b>, and — most importantly for me — <b>how it is meant to help the patient</b>.</p>
+
+<h2><span class="num">3</span>Every part of the program, explained</h2>
+
+<div class="card">
+<div class="accbar"></div>
+<div class="ch"><span class="role">Layer 0 — the listener</span></div>
+<div class="cb">
+<h3>The Decoder — reading the wish to move</h3>
+<p><span class="lab">What it is.</span> The entry point. In a real system this is your cortical decoder — the electrodes over the movement area of the brain that read the intention. In my simulator it is a stand-in: the intention comes from a keyboard, a script, or a scenario, so the rest of the program can be built and tested.</p>
+<p><span class="lab">What it does.</span> It produces a small, honest signal — <code>Intent</code> — several dozen times a second: <i>what</i> the person wants (stand, step, turn, stairs), <i>how fast</i>, and <i>how confident</i> the reading is. That is all. It never decides to move for the person.</p>
+<div class="help"><span class="lbl">How it helps the patient</span> It keeps the human in command. The movement always begins with the person’s own will — the program only listens. Nothing moves unless you intend it to.</div>
+</div></div>
+
+<div class="card">
+<div class="accbar"></div>
+<div class="ch"><span class="role">Layer 1 — the conductor</span></div>
+<div class="cb">
+<h3>The Orchestrator — turning “walk” into the rhythm of walking</h3>
+<p><span class="lab">What it is.</span> The heart of the program, and the reason it is called an <i>orchestrator</i>. Walking is not one action — it is a repeating cycle of phases (weight-bearing “stance”, then the leg swinging forward, then both feet down), with the two legs in opposite phases. This layer holds that rhythm.</p>
+<p><span class="lab">What it does.</span> It takes the simple wish (“walk”) and, using a model of the body’s own natural gait rhythm — what neuroscience calls a <span class="lab">central pattern generator</span> — it breaks the wish into <i>which muscle group should be active, how strongly, and in which slice of the step cycle</i>. It is a conductor keeping time and telling each section of the orchestra when to come in. Crucially, it models walking as a living rhythm, not as a crude “this muscle gets this voltage” lookup — which is both more truthful to how the spinal circuits actually work and what separates a serious concept from a naïve one.</p>
+<div class="help"><span class="lbl">How it helps the patient</span> This is what could give a step its <b>naturalness</b> — a smooth, properly-timed, self-correcting gait instead of stiff, robotic twitching. It is the difference between being moved and truly walking.</div>
+</div></div>
+
+<div class="card">
+<div class="accbar"></div>
+<div class="ch"><span class="role">Layer 2 — the musicians</span></div>
+<div class="cb">
+<h3>The Effectors — one careful specialist per muscle group</h3>
+<p><span class="lab">What it is.</span> A team of small, focused agents — one for each muscle group and side of the body (hip flexor and extensor, knee, ankle, trunk stabilisers, left and right). Each is a specialist for its own muscle only.</p>
+<p><span class="lab">What it does.</span> The conductor says “this muscle, this much, now”. Each effector translates that request into the concrete stimulation settings — how strong, how wide and how frequent the pulses, and through which electrode contacts — using a calibration curve that mirrors how a real muscle responds. It then hands the command <i>onward for safety approval</i>; it can never act on its own.</p>
+<div class="help"><span class="lbl">How it helps the patient</span> Fine, per-muscle control is what makes movement <b>precise and personal</b>. Every body — and every day — is different; this layer is where the stimulation can be tuned to <i>your</i> legs rather than a generic template.</div>
+</div></div>
+
+<div class="card">
+<div class="accbar"></div>
+<div class="ch"><span class="role">Layer 3 — the sense of balance</span></div>
+<div class="cb">
+<h3>Feedback &amp; Sensor Fusion — the program’s eyes and inner ear</h3>
+<p><span class="lab">What it is.</span> The senses. In a real system these are wearable motion sensors, joint angles, foot-pressure and muscle signals; in the simulator they come from the digital twin of the body. This layer fuses them into one clear picture.</p>
+<p><span class="lab">What it does.</span> Many times a second it answers: <i>which phase of the step are we really in? is the body balanced? is something going wrong</i> — a foot dragging, the two sides out of symmetry, balance being lost? It then feeds corrections back to the conductor and the musicians so the next moment is adjusted. This is what “closed-loop” means: the program watches the result and fixes itself continuously, instead of blindly playing a fixed recording.</p>
+<div class="help"><span class="lbl">How it helps the patient</span> This is <b>safety and confidence in motion</b> — the system that catches a stumble before it becomes a fall, and keeps the gait steady on real, uneven ground. It is what lets a person trust their own legs again.</div>
+</div></div>
+
+<div class="card">
+<div class="accbar"></div>
+<div class="ch"><span class="role">Layer 4 — learning over time</span></div>
+<div class="cb">
+<h3>Adaptation — getting better session after session</h3>
+<p><span class="lab">What it is.</span> The slow, patient learner. It works <i>between</i> steps and <i>between</i> sessions, never in the split-second of a single movement.</p>
+<p><span class="lab">What it does.</span> Bodies change — muscles fatigue within a session, respond differently on different days, and settings drift over time. This layer looks at the history of how gait quality is going and gently re-tunes the parameters of the conductor and the musicians: compensating for fatigue, re-calibrating the muscle-response curves, adjusting “for today”.</p>
+<div class="help"><span class="lbl">How it helps the patient</span> It means the system <b>keeps up with you</b> — it does not degrade as you tire or grow stale over the weeks, but adapts, so rehabilitation compounds instead of plateauing. This is exactly where a large, diverse patient cohort would make the learning far stronger.</div>
+</div></div>
+
+<div class="card">
+<div class="accbar amber"></div>
+<div class="ch"><span class="role amber">Layer 5 — the guardian · highest authority</span></div>
+<div class="cb">
+<h3>The Safety Supervisor — the one part that can always say “no”</h3>
+<p><span class="lab">What it is.</span> The most important layer in the whole program, and deliberately the simplest and most predictable. It is plain, fully-tested code with <b>no AI in it at all</b> — because the part that guarantees safety must be transparent and provable.</p>
+<p><span class="lab">What it does.</span> <i>Every</i> stimulation command — without a single exception — must pass through it before anything happens. It checks every hard limit (current, pulse width, frequency, charge, a heat proxy, a watchdog for autonomic risk). If a command is safe, it passes. If it is slightly too much, the guardian trims it back to the safe edge. If it is dangerous, it is blocked. And it holds the emergency stop that halts everything at once. No other layer — and no AI — can ever bypass it or overrule it.</p>
+<div class="help"><span class="lbl">How it helps the patient</span> This is the foundation of <b>trust</b>. It is the architectural promise that the technology helping you can never harm you — that no clever component, no mistake, no adaptation gone wrong can ever push past a safe boundary. Safety is not a feature bolted on; it is the layer everything else must obey.</div>
+</div></div>
+
+<div class="card">
+<div class="accbar"></div>
+<div class="ch"><span class="role">Above the live loop — planning &amp; explaining</span></div>
+<div class="cb">
+<h3>The Supervisory AI layer — offline, never in the moment</h3>
+<p><span class="lab">What it is.</span> A helper that works <i>outside</i> the real-time movement loop, on the timescale of minutes and reports, not milliseconds of a step.</p>
+<p><span class="lab">What it does.</span> It translates a clinician’s goals into a protocol configuration, writes plain-language session summaries, and explains why the adaptation made the choices it did. By firm design, AI is allowed <b>only</b> here — for planning and explanation — and is <b>never</b> placed inside the fast motor loop where timing and safety are decided.</p>
+<div class="help"><span class="lbl">How it helps the patient</span> It makes the whole system <b>understandable</b> — to the clinician guiding the therapy and to the patient living it — while keeping the moment-to-moment control in the hands of simple, provable, deterministic code.</div>
+</div></div>
+
+<div class="card">
+<div class="accbar"></div>
+<div class="ch"><span class="role">The test-bed — a body to practise on</span></div>
+<div class="cb">
+<h3>The simulated body (digital twin) &amp; the demo scenarios</h3>
+<p><span class="lab">What it is.</span> A physics-based stand-in for the legs and the stimulator, so the whole program can be exercised safely without ever touching a person or a device. It receives commands, moves virtual joints, and reports back what happened.</p>
+<p><span class="lab">What it does.</span> It runs three complete demonstrations end-to-end — <b>sit-to-stand</b>, <b>walking</b> (including a deliberate push, so you can watch the system correct its balance), and <b>climbing stairs</b> (a change of intent). Each one logs the full chain: intention → gait phases → muscle activations → stimulation commands, before and after the safety check → the body’s response. That full, transparent trace <i>is</i> the proof of concept.</p>
+<div class="help"><span class="lbl">How it helps the patient</span> It lets the whole approach be built, tested and proven <b>safely and honestly first</b> — so that if it ever earns the right to sit on top of a real platform, it arrives already coherent, already safety-checked, already understood.</div>
+</div></div>
+
+<h2><span class="num">4</span>An honest map: what is real, and what needs you</h2>
+<p>I would rather be trusted than impressive. Here is exactly where the line falls today.</p>
+<table>
+<tr><th>Part of the program</th><th>Status today</th><th>What would make it real</th></tr>
+<tr><td>Orchestration logic, gait rhythm, per-muscle timing, closed-loop correction</td><td><span class="tag real">working software</span></td><td>Validation against real gait data</td></tr>
+<tr><td>Safety supervisor (limits, clamp, block, e-stop)</td><td><span class="tag real">working &amp; fully tested</span></td><td>Real clinical limits in place of the illustrative ones</td></tr>
+<tr><td>The numbers (currents, timings, angles)</td><td><span class="tag toy">illustrative placeholders</span></td><td>Real recruitment &amp; stimulation data</td></tr>
+<tr><td>Intent decoder (brain side)</td><td><span class="tag toy">stand-in</span></td><td>A real cortical decoder — your domain</td></tr>
+<tr><td>The stimulation hardware itself</td><td><span class="tag algo">designed to sit on top of a real platform</span></td><td>A real EES platform + its official interface</td></tr>
+<tr><td>Clinical &amp; regulatory validity</td><td><span class="tag toy">none claimed</span></td><td>Clinical validation and a regulatory pathway</td></tr>
+</table>
+<p>The program was deliberately designed to <span class="lab">lay on top of</span> a real stimulation platform through an official interface — never to duplicate or replace the neuroscience or the device. Its only ambition is to be a good conductor for an orchestra that already exists.</p>
+
+<div class="call nobreak">
+<b>Where I might genuinely help.</b> The one thing I can offer that a single lab or a single device-maker cannot is <b>clinical scale and patient diversity</b>. Through 1TMO and the Unbroken National Rehabilitation Center in Lviv, we care for what is likely the largest active cohort of chronic traumatic spinal-cord-injury patients in Europe — predominantly young people injured in the war — and we are scaling toward 1,500 dedicated rehabilitation beds. An adaptive orchestration layer learns best from exactly that kind of diversity. That is the collaboration I dream of — not to repeat your work, but to help it reach more people.</div>
+
+<h2><span class="num">5</span>See it for yourself</h2>
+<p>The program runs live in a browser — no installation. You can start each scenario, push the walking figure to watch the balance recover, and see every intention, activation and stimulation command as it happens, including which commands the safety guardian trimmed or blocked:</p>
+<p><a class="demo" href="https://brain-spine-orchestrator-production.up.railway.app">brain-spine-orchestrator-production.up.railway.app</a></p>
+
+<div class="foot">
+<p style="margin:4px 0"><span class="k">A last word, from me personally.</span> I built this as a patient — someone who uses an epidural stimulator every day and is fully, stubbornly determined to stand on his own legs again. I am not claiming to have discovered anything; I know the experts are you. I built it because motivation had to go somewhere, and because I wanted to understand your field well enough to be useful rather than merely hopeful. Whatever form of help, feedback, learning or collaboration you might ever consider meaningful — I am ready, and I am able to travel. Thank you for the work you do. For people like me, it is the difference between a wall and a door.</p>
+<p style="margin:9px 0 0">Ihor Sharanda · Lviv, Ukraine · Concept author, Brain-Spine Orchestrator · Advisor, First Lviv Territorial Medical Union (1TMO) / Unbroken National Rehabilitation Center</p>
+</div>
+</div>
+
+</body>
+</html>
