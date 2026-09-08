@@ -1,0 +1,782 @@
+/* =============================================================
+   Лабіринт для двох — рушій.
+   Тексти — у content.js. Тут тільки поведінка, анімація і звук.
+   Цільовий пристрій: iPhone, Safari, портрет.
+   ============================================================= */
+(() => {
+'use strict';
+
+const C = window.CONTENT;
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const SVGNS = 'http://www.w3.org/2000/svg';
+
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const D = k => Math.round(k * (REDUCED ? 0.35 : 1));   // тривалості
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------- Секрет ---------- *
+ * ?s=north → хлопчик, ?s=south → дівчинка. Параметр зчитується один раз
+ * і негайно стирається з адресного рядка: на екрані його не видно,
+ * у консоль він не потрапляє ніколи.                                    */
+const SECRET = (() => {
+  let s = null;
+  try {
+    const v = new URLSearchParams(location.search).get('s');
+    if (v === 'north' || v === 'south') s = v;
+  } catch (_) {}
+  if (location.search) {
+    history.replaceState(null, '', location.pathname + location.hash);
+  }
+  return s;
+})();
+const VARIANT = SECRET ? C.variants[SECRET] : null;
+
+/* =============================================================
+   Анімаційний хелпер. Використовує GSAP, коли він доступний,
+   інакше — власний rAF-цикл. Візуально шлях один і той самий.
+   ============================================================= */
+const easeInOutCubic = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+
+function tween(ms, onUpdate, ease = 'power2.inOut') {
+  const dur = D(ms);
+  return new Promise(resolve => {
+    if (dur <= 0) { onUpdate(1); resolve(); return; }
+    const o = { p: 0 };
+    if (window.gsap) {
+      window.gsap.to(o, {
+        p: 1, duration: dur / 1000, ease,
+        onUpdate: () => onUpdate(o.p),
+        onComplete: () => { onUpdate(1); resolve(); }
+      });
+      return;
+    }
+    const t0 = performance.now();
+    const step = now => {
+      const p = Math.min(1, (now - t0) / dur);
+      onUpdate(easeInOutCubic(p));
+      p < 1 ? requestAnimationFrame(step) : resolve();
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+/* =============================================================
+   Екрани: єдиний стиль переходу — cross-fade + ледь помітний зсув.
+   ============================================================= */
+const screens = {};
+$$('.screen').forEach(el => screens[el.dataset.screen] = el);
+let current = null;
+
+async function show(name) {
+  if (current === name) return;
+  const next = screens[name];
+  const prev = current ? screens[current] : null;
+  if (prev) {
+    prev.classList.remove('is-on');
+    await wait(D(320));
+  }
+  next.classList.add('is-on');
+  current = name;
+  await wait(D(300));
+}
+
+/* =============================================================
+   Звук. Стартує тільки після першого тапу (обмеження iOS/Android).
+   Якщо файлу немає — застосунок працює далі мовчки.
+   ============================================================= */
+const Audio_ = (() => {
+  const els = { walk: $('#aWalk'), reveal: $('#aReveal'), memories: $('#aMemories') };
+  const ok = { walk: false, reveal: false, memories: false };
+  const target = { walk: 0.34, reveal: 0.8, memories: 0.4 };   // стеля гучності
+  let muted = localStorage.getItem('lab_muted') === '1';
+  let unlocked = false;
+  const btn = $('#soundToggle');
+
+  Object.keys(els).forEach(k => {
+    const src = C.audio[k];
+    if (src) els[k].src = src;
+    els[k].volume = 0;
+  });
+
+  function markReady(k) { ok[k] = true; }
+
+  /* Розблокування в момент першого тапу. pause() — СИНХРОННО одразу після
+     play(): якщо ставити його в .then(), проміс дорешується вже після того,
+     як ми запустили walk, і глушить трек. */
+  function unlock() {
+    if (unlocked) return;
+    unlocked = true;
+    Object.values(els).forEach(a => {
+      if (!a.src) return;
+      a.volume = 0;
+      const p = a.play();
+      if (p && p.catch) p.catch(() => {});
+      a.pause();
+      a.currentTime = 0;
+    });
+  }
+
+  async function fadeTo(k, to, ms) {
+    const a = els[k];
+    if (!ok[k] || !a.src) return;
+    const from = a.volume;
+    const cap = muted ? 0 : 1;
+    await tween(ms, p => { a.volume = Math.max(0, Math.min(1, (from + (to - from) * p) * cap)); }, 'none');
+  }
+
+  async function play(k, ms = 1400) {
+    const a = els[k];
+    if (!ok[k] || !a.src || muted) return;
+    a.volume = 0;
+    try { await a.play(); } catch (_) { return; }
+    await fadeTo(k, target[k], ms);
+  }
+
+  async function stop(k, ms = 900) {
+    const a = els[k];
+    if (!ok[k] || !a.src) return;
+    await fadeTo(k, 0, ms);
+    a.pause();
+  }
+
+  /* Плавний підйом гучності — використовується під шкалу вердикту */
+  function swell(k, mult, ms) { return fadeTo(k, target[k] * mult, ms); }
+
+  function syncBtn() {
+    btn.classList.toggle('is-muted', muted);
+    btn.setAttribute('aria-label', muted ? 'Увімкнути звук' : 'Вимкнути звук');
+  }
+  btn.addEventListener('click', () => {
+    muted = !muted;
+    localStorage.setItem('lab_muted', muted ? '1' : '0');
+    Object.keys(els).forEach(k => {
+      if (muted) els[k].volume = 0;
+      else if (!els[k].paused) els[k].volume = target[k];
+    });
+    syncBtn();
+  });
+  syncBtn();
+
+  /* Повернення з фону: iOS ставить трек на паузу */
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden || muted) return;
+    Object.keys(els).forEach(k => {
+      const a = els[k];
+      if (a.dataset.wanted === '1' && a.paused) a.play().catch(() => {});
+    });
+  });
+
+  return { els, markReady, unlock, play, stop, swell, reveal: () => els.reveal,
+           get muted() { return muted; }, showBtn: () => btn.hidden = false };
+})();
+
+/* =============================================================
+   Прелоад. Усе вантажиться на інтро-екрані; під час гри —
+   жодного мережевого запиту.
+   ============================================================= */
+async function preload(onProgress) {
+  const jobs = [];
+
+  Object.keys(C.audio).forEach(k => {
+    const src = C.audio[k];
+    if (!src) return;
+    jobs.push(new Promise(res => {
+      const a = Audio_.els[k];
+      let done = false;
+      const finish = good => { if (done) return; done = true; if (good) Audio_.markReady(k); res(); };
+      a.addEventListener('canplaythrough', () => finish(true), { once: true });
+      a.addEventListener('error', () => finish(false), { once: true });
+      if (a.readyState >= 3) finish(true);
+      setTimeout(() => finish(a.readyState >= 2), 9000);
+      a.load();
+    }));
+  });
+
+  photos.length = 0;
+  (C.photos.items || []).forEach(item => {
+    jobs.push(new Promise(res => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.onload  = () => { photos.push({ img, caption: item.caption || '', file: item.file }); res(); };
+      img.onerror = () => res();
+      img.src = 'assets/photos/' + item.file;
+    }));
+  });
+
+  let done = 0;
+  const total = Math.max(1, jobs.length);
+  const tick = () => onProgress(++done / total);
+  jobs.forEach(p => p.then(tick));
+  await Promise.all(jobs);
+  /* Порядок фото = порядок у content.js, а не порядок завантаження */
+  const order = (C.photos.items || []).map(i => i.file);
+  photos.sort((x, y) => order.indexOf(x.file) - order.indexOf(y.file));
+  onProgress(1);
+}
+const photos = [];
+
+/* =============================================================
+   Лабіринт. Ліхтарики розставляються по реальній довжині кривої,
+   фішка пливе саме вздовж неї (getPointAtLength), а не стрибком.
+   ============================================================= */
+const Maze = (() => {
+  const paths = { a: $('#pathA'), b: $('#pathB') };
+  const chips = { a: $('#chipA'), b: $('#chipB') };
+  const groups = { a: $('#lanternsA'), b: $('#lanternsB') };
+  const centre = $('#centre');
+  const centreHalo = $('.centre-halo');
+  const decor = $('#mazeDecor');
+  const nodes = { a: [], b: [] };
+  const lanterns = { a: [], b: [] };
+  const lens = { a: 0, b: 0 };
+  let steps = 0, totalSteps = 1;
+
+  function pointAt(side, frac) {
+    const p = paths[side].getPointAtLength(lens[side] * frac);
+    return { x: p.x, y: p.y };
+  }
+
+  function build(perSide) {
+    totalSteps = perSide * 2;
+    ['a', 'b'].forEach(side => {
+      const path = paths[side];
+      lens[side] = path.getTotalLength();
+      path.style.color = C.players[side].color;
+      inkLayers(path, C.players[side].color);
+
+      for (let i = 1; i <= perSide; i++) {
+        const pt = pointAt(side, i / perSide);
+        const halo = document.createElementNS(SVGNS, 'circle');
+        halo.setAttribute('cx', pt.x); halo.setAttribute('cy', pt.y);
+        halo.setAttribute('r', 9);
+        halo.setAttribute('fill', C.players[side].color);
+        halo.setAttribute('filter', 'url(#soft)');
+        halo.setAttribute('class', 'lantern-halo');
+
+        const dot = document.createElementNS(SVGNS, 'circle');
+        dot.setAttribute('cx', pt.x); dot.setAttribute('cy', pt.y);
+        dot.setAttribute('r', i === perSide ? 4 : 3.1);
+        dot.setAttribute('class', 'lantern');
+        dot.style.color = C.players[side].color;
+
+        groups[side].append(dot, halo);
+        lanterns[side].push({ dot, halo });
+        nodes[side].push(pt);
+      }
+
+      const start = pointAt(side, 0);
+      chips[side].style.color = C.players[side].color;
+      chips[side].setAttribute('transform', `translate(${start.x} ${start.y})`);
+    });
+    buildDecor();
+  }
+
+  /* Товщина лінії «зі змінною»: кілька шарів однієї кривої з різною
+     вагою і рваним пунктиром дають відчуття мальованої від руки карти. */
+  function inkLayers(path, tint) {
+    const d = path.getAttribute('d');
+    const specs = [
+      { w: 6.4, o: 0.10, dash: '',                  c: tint },   // тінь у кольорі гравця
+      { w: 1.3, o: 0.34, dash: '26 7 44 11 17 8',   c: null },
+      { w: 0.8, o: 0.22, dash: '9 21 33 13',        c: null }
+    ];
+    specs.forEach(sp => {
+      const el = document.createElementNS(SVGNS, 'path');
+      el.setAttribute('d', d);
+      el.setAttribute('class', 'maze-ink');
+      el.setAttribute('stroke', sp.c ? hexA(sp.c, sp.o) : 'rgba(233,199,102,' + sp.o + ')');
+      el.setAttribute('stroke-width', sp.w);
+      if (sp.dash) el.setAttribute('stroke-dasharray', sp.dash);
+      path.parentNode.insertBefore(el, path);
+    });
+  }
+
+  /* Тупикові відгалуження: декоративні, але живі — тихо мерехтять */
+  function buildDecor() {
+    const rnd = seed => { let s = seed; return () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648; };
+    const r = rnd(20260908);
+    ['a', 'b'].forEach(side => {
+      for (let i = 0; i < 4; i++) {
+        const at = 0.12 + i * 0.2 + r() * 0.07;
+        const p0 = paths[side].getPointAtLength(lens[side] * at);
+        const p1 = paths[side].getPointAtLength(lens[side] * at + 6);
+        const nx = -(p1.y - p0.y), ny = (p1.x - p0.x);
+        const n = Math.hypot(nx, ny) || 1;
+        const dir = r() > 0.5 ? 1 : -1;
+        const L = 22 + r() * 26;
+        const ex = p0.x + (nx / n) * L * dir + (r() - .5) * 14;
+        const ey = p0.y + (ny / n) * L * dir + (r() - .5) * 14;
+        const cx = (p0.x + ex) / 2 + (r() - .5) * 20;
+        const cy = (p0.y + ey) / 2 + (r() - .5) * 20;
+
+        const br = document.createElementNS(SVGNS, 'path');
+        br.setAttribute('d', `M ${p0.x.toFixed(1)} ${p0.y.toFixed(1)} Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}`);
+        br.setAttribute('class', 'decor-branch');
+        const sp = document.createElementNS(SVGNS, 'circle');
+        sp.setAttribute('cx', ex.toFixed(1)); sp.setAttribute('cy', ey.toFixed(1));
+        sp.setAttribute('r', 2.1);
+        sp.setAttribute('class', 'decor-spark');
+        if (!REDUCED) {
+          const dur = (3.4 + r() * 3).toFixed(2), del = (r() * 4).toFixed(2);
+          sp.style.animation = `flicker ${dur}s ease-in-out ${del}s infinite`;
+          br.style.animation = `flicker ${(+dur + 1.6).toFixed(2)}s ease-in-out ${del}s infinite`;
+        }
+        decor.append(br, sp);
+      }
+    });
+  }
+
+  async function enter() {
+    await tween(900, p => { chips.a.style.opacity = chips.b.style.opacity = p; }, 'power1.out');
+  }
+
+  /* Один крок: запалюємо наступний ліхтарик і ведемо фішку до нього */
+  async function step(side, index, perSide) {
+    const l = lanterns[side][index];
+    l.dot.classList.add('is-lit');
+    l.halo.style.opacity = '0.5';
+
+    const from = index === 0 ? 0 : (index / perSide) * lens[side];
+    const to = ((index + 1) / perSide) * lens[side];
+    const chip = chips[side];
+
+    await tween(1150, p => {
+      const pt = paths[side].getPointAtLength(from + (to - from) * p);
+      chip.setAttribute('transform', `translate(${pt.x.toFixed(2)} ${pt.y.toFixed(2)})`);
+    }, 'power2.inOut');
+
+    steps++;
+    const glow = 0.18 + 0.82 * (steps / totalSteps);
+    centreHalo.style.opacity = glow.toFixed(3);
+    $('.centre-core').style.opacity = (0.5 + 0.5 * (steps / totalSteps)).toFixed(3);
+    paths[side].classList.add('lit');
+  }
+
+  /* Фінал: обидві фішки зливаються в одну, центр розкривається */
+  async function converge() {
+    centre.classList.add('is-open');
+    await tween(1000, p => {
+      const s = 1 + p * 1.9;
+      centreHalo.setAttribute('transform', `translate(${180 - 180 * s} ${180 - 180 * s}) scale(${s})`);
+      chips.a.style.opacity = chips.b.style.opacity = String(1 - p * 0.75);
+    }, 'power2.out');
+  }
+
+  return { build, enter, step, converge };
+})();
+
+/* =============================================================
+   Конфеті
+   ============================================================= */
+const Confetti = (() => {
+  const cv = $('#confetti');
+  const ctx = cv.getContext('2d');
+  let parts = [], raf = 0;
+
+  function fit() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  addEventListener('resize', fit); fit();
+
+  function burst(colors) {
+    fit();
+    const n = REDUCED ? 40 : 130;
+    parts = Array.from({ length: n }, () => ({
+      x: innerWidth * (0.15 + Math.random() * 0.7),
+      y: -20 - Math.random() * innerHeight * 0.5,
+      vx: (Math.random() - .5) * 1.6,
+      vy: 1.4 + Math.random() * 2.4,
+      w: 5 + Math.random() * 6, h: 8 + Math.random() * 8,
+      rot: Math.random() * Math.PI, vr: (Math.random() - .5) * 0.14,
+      c: colors[(Math.random() * colors.length) | 0],
+      life: 1
+    }));
+    cancelAnimationFrame(raf);
+    if (REDUCED) { draw(); return; }
+    loop();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    parts.forEach(p => {
+      ctx.save();
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    });
+  }
+
+  function loop() {
+    let alive = false;
+    parts.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.018; p.rot += p.vr;
+      if (p.y > innerHeight * 0.84) p.life -= 0.02;
+      if (p.life > 0 && p.y < innerHeight + 60) alive = true;
+    });
+    draw();
+    if (alive) raf = requestAnimationFrame(loop);
+    else ctx.clearRect(0, 0, innerWidth, innerHeight);
+  }
+
+  return { burst };
+})();
+
+/* =============================================================
+   Фінальна картка → PNG для збереження в галерею
+   ============================================================= */
+function renderCard() {
+  const W = 1080, H = 1350;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const x = cv.getContext('2d');
+
+  const g = x.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#0d1322'); g.addColorStop(.55, '#080c17'); g.addColorStop(1, '#060911');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+
+  const halo = x.createRadialGradient(W / 2, H * .46, 0, W / 2, H * .46, W * .62);
+  halo.addColorStop(0, hexA(VARIANT.color, .30));
+  halo.addColorStop(1, hexA(VARIANT.color, 0));
+  x.fillStyle = halo; x.fillRect(0, 0, W, H);
+
+  ribbon(x, W, 150, C.players.a.color);
+  ribbon(x, W, H - 150, C.players.b.color);
+
+  x.textAlign = 'center';
+  x.fillStyle = 'rgba(200,189,169,.85)';
+  x.font = '400 30px Georgia, serif';
+  x.fillText(spaced(C.variants[SECRET].kicker.toUpperCase()), W / 2, H * .42);
+
+  x.fillStyle = VARIANT.color;
+  x.shadowColor = hexA(VARIANT.color, .55); x.shadowBlur = 60;
+  x.font = '400 132px Georgia, serif';
+  x.fillText(VARIANT.word, W / 2, H * .525);
+  x.shadowBlur = 0;
+
+  x.fillStyle = '#f3ecdd';
+  x.font = '400 42px Georgia, serif';
+  x.fillText(VARIANT.finalLine, W / 2, H * .615);
+
+  x.fillStyle = 'rgba(200,189,169,.6)';
+  x.font = '400 30px Georgia, serif';
+  x.fillText(`${C.players.a.name} + ${C.players.b.name}`, W / 2, H * .685);
+
+  return cv.toDataURL('image/png');
+}
+function ribbon(x, W, y, color) {
+  const g = x.createLinearGradient(0, 0, W, 0);
+  g.addColorStop(0, hexA(color, 0)); g.addColorStop(.5, hexA(color, .8)); g.addColorStop(1, hexA(color, 0));
+  x.fillStyle = g; x.fillRect(0, y, W, 3);
+}
+function hexA(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+const spaced = s => s.split('').join(' ');
+
+/* =============================================================
+   Сценарій
+   ============================================================= */
+const picked = [];
+
+function fillStaticTexts() {
+  $('#introTitle').textContent = C.intro.title;
+  $('#introText').textContent = C.intro.text;
+  $('#startBtn').textContent = C.intro.start;
+  $('#handoffName').textContent = '';
+  $('#verdictTitle').textContent = C.verdict.title;
+  $('#scaleLabel').textContent = C.verdict.scaleLabel;
+  $('#verdictNext').textContent = C.verdict.next;
+  $('#revealLead').textContent = C.reveal.lead;
+  $('#revealHint').textContent = C.reveal.hint;
+  $('#revealNext').textContent = C.reveal.next;
+  $('#photosTitle').textContent = C.photos.title;
+  $('#saveBtn').textContent = C.final.save;
+  $('.save-hint').textContent = C.final.saveHint;
+}
+
+/* --- Екран ведучого --- */
+function initHost() {
+  let chosen = null;
+  $$('.btn-host').forEach(b => b.addEventListener('click', () => {
+    chosen = b.dataset.secret;
+    $$('.btn-host').forEach(o => o.style.opacity = o === b ? '1' : '.35');
+    const url = location.origin + location.pathname + '?s=' + chosen;
+    $('#hostLinkText').textContent = url;
+    $('#hostLink').hidden = false;
+    $('#hostCopied').hidden = true;
+  }));
+  $('#hostCopy').addEventListener('click', async () => {
+    const url = $('#hostLinkText').textContent;
+    try { await navigator.clipboard.writeText(url); }
+    catch (_) {
+      const t = document.createElement('textarea');
+      t.value = url; document.body.append(t); t.select();
+      try { document.execCommand('copy'); } catch (__) {}
+      t.remove();
+    }
+    $('#hostCopied').hidden = false;
+  });
+}
+
+/* --- Гра --- */
+async function runGame() {
+  const qs = C.questions;
+  const perSide = { a: qs.filter(q => q.for === 'a').length, b: qs.filter(q => q.for === 'b').length };
+  const idx = { a: 0, b: 0 };
+  Maze.build(Math.max(perSide.a, perSide.b));
+
+  await show('game');
+  await Maze.enter();
+
+  for (let i = 0; i < qs.length; i++) {
+    const q = qs[i];
+    const player = C.players[q.for];
+
+    await showHandoff(player);
+    await show('game');
+    const answer = await askQuestion(q, player);
+    picked.push({ trait: answer.trait, side: q.for });
+    await Maze.step(q.for, idx[q.for]++, Math.max(perSide.a, perSide.b));
+    await wait(D(320));
+  }
+
+  await Maze.converge();
+  await wait(D(700));
+}
+
+async function showHandoff(player) {
+  $('#handoffName').textContent = player.dative;
+  $('#handoffName').style.color = player.color;
+  $('#handoffDot').style.color = player.color;
+  $('#handoffDot').style.background = player.color;
+  $('.handoff-lead').textContent = C.handoff.lead;
+  await show('handoff');
+  await wait(D(1200));
+}
+
+function askQuestion(q, player) {
+  const who = $('#qWho'), text = $('#qText'), box = $('#qAnswers');
+  who.textContent = player.name;
+  who.style.color = player.color;
+  text.textContent = q.q;
+  box.className = 'q-answers';
+  box.innerHTML = '';
+
+  const btns = q.answers.map(a => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'answer';
+    b.textContent = a.text;
+    b.style.color = player.color;
+    box.append(b);
+    return b;
+  });
+
+  /* Відповіді з'являються з невеликою затримкою одна за одною */
+  btns.forEach((b, i) => setTimeout(() => b.classList.add('is-in'), D(220 + i * 130)));
+
+  return new Promise(resolve => {
+    btns.forEach((b, i) => b.addEventListener('click', async () => {
+      box.classList.add('is-locked');
+      b.classList.add('is-picked');
+      btns.forEach(o => { if (o !== b) o.classList.add('is-dim'); });
+      await wait(D(620));
+      resolve(q.answers[i]);
+    }, { once: true }));
+  });
+}
+
+/* --- Вердикт: шкала росте синхронно зі звуком, портрет — рядок за рядком --- */
+async function runVerdict() {
+  const list = $('#portrait');
+  list.innerHTML = '';
+  const lead = document.createElement('li');
+  lead.className = 'portrait-lead';
+  lead.textContent = C.verdict.portraitLead;
+  list.append(lead);
+
+  const seen = new Set();
+  const lines = [];
+  picked.forEach(a => { if (a && a.trait && !seen.has(a.trait)) { seen.add(a.trait); lines.push(a); } });
+  const items = lines.map(({ trait, side }) => {
+    const li = document.createElement('li');
+    li.textContent = trait;
+    li.style.setProperty('--dot', C.players[side].color);   // хто це сказав
+    list.append(li);
+    return li;
+  });
+
+  $('#scaleFill').style.width = '0%';
+  $('#verdictNext').hidden = true;
+  await show('verdict');
+
+  Audio_.swell('walk', 1.6, 2600);
+  await tween(2600, p => { $('#scaleFill').style.width = (p * 100).toFixed(1) + '%'; }, 'power1.inOut');
+  Audio_.swell('walk', 1, 1200);
+
+  await wait(D(320));
+  lead.classList.add('is-in');
+  for (const li of items) { await wait(D(260)); li.classList.add('is-in'); }
+
+  await wait(D(500));
+  $('#verdictNext').hidden = false;
+  await new Promise(r => $('#verdictNext').addEventListener('click', r, { once: true }));
+}
+
+/* --- Reveal --- */
+async function runReveal() {
+  $('#revealBefore').hidden = false;
+  $('#revealAfter').hidden = true;
+  $('#revealNext').hidden = true;
+  $('#revealNext').classList.remove('is-in');
+  await show('reveal');
+
+  await new Promise(r => $('#heartBtn').addEventListener('click', r, { once: true }));
+
+  const flash = $('#flash');
+  flash.style.background = '#000';
+
+  /* 1. Темрява і тиша */
+  Audio_.stop('walk', 420);
+  Audio_.els.walk.dataset.wanted = '0';
+  await tween(450, p => { flash.style.opacity = String(p); }, 'power2.in');
+
+  $('#revealBefore').hidden = true;
+  $('#revealAfter').hidden = false;
+  document.documentElement.style.setProperty('--reveal', VARIANT.color);
+  document.documentElement.style.setProperty('--reveal-2', VARIANT.color2);
+  $('#revealKicker').textContent = VARIANT.kicker;
+  $('#revealWord').textContent = VARIANT.word;
+  $('#revealSub').textContent = VARIANT.sub;
+  const kicker = $('#revealKicker'), word = $('#revealWord'), sub = $('#revealSub');
+  kicker.style.opacity = word.style.opacity = sub.style.opacity = '0';
+  word.style.transform = 'scale(.94)';
+
+  /* 2. Рівно секунда тиші й темряви. Це головний важіль — не скорочувати. */
+  await wait(1000);
+
+  /* 3. Спалах — і в цю ж мить стартує музика */
+  flash.style.background = '#fff';
+  Audio_.els.reveal.dataset.wanted = '1';
+  Audio_.play('reveal', 200);
+  Audio_.els.memories.dataset.wanted = '0';
+
+  tween(900, p => { flash.style.opacity = String(1 - p); }, 'power2.out');
+
+  await wait(D(180));
+  tween(700, p => { kicker.style.opacity = String(p); }, 'power1.out');
+  await wait(D(320));
+  tween(900, p => {
+    word.style.opacity = String(p);
+    word.style.transform = `scale(${(0.94 + 0.06 * p).toFixed(3)})`;
+  }, 'power2.out');
+  Confetti.burst([VARIANT.color, VARIANT.color2, '#e9c766', '#f3ecdd']);
+  await wait(D(700));
+  tween(800, p => { sub.style.opacity = String(p); }, 'power1.out');
+
+  await wait(D(2600));
+  $('#revealNext').hidden = false;
+  requestAnimationFrame(() => $('#revealNext').classList.add('is-in'));
+  await new Promise(r => $('#revealNext').addEventListener('click', r, { once: true }));
+}
+
+/* --- Фото: Ken Burns + cross-fade --- */
+async function runPhotos() {
+  if (!photos.length) return;
+  const stage = $('#photoStage');
+  const cap = $('#photoCaption');
+  stage.innerHTML = '';
+
+  await Audio_.stop('reveal', 1200);
+  Audio_.els.reveal.dataset.wanted = '0';
+  Audio_.els.memories.dataset.wanted = '1';
+  Audio_.play('memories', 1600);
+
+  await show('photos');
+
+  let skipped = false;
+  const skip = new Promise(r => $('#photosSkip').addEventListener('click', () => { skipped = true; r(); }, { once: true }));
+
+  const HOLD = REDUCED ? 2600 : 4600;
+  for (let i = 0; i < photos.length && !skipped; i++) {
+    const { img, caption } = photos[i];
+    const el = img.cloneNode();
+    el.className = '';
+    stage.append(el);
+
+    if (!REDUCED) {
+      const dir = i % 2 ? -1 : 1;
+      el.style.transform = `scale(1.06) translate(${dir * 1.5}%, ${-dir * 1.2}%)`;
+      el.style.transition = `opacity 1.5s var(--ease), transform ${(HOLD + 1600) / 1000}s linear`;
+      requestAnimationFrame(() => {
+        el.classList.add('is-on');
+        el.style.transform = `scale(1.16) translate(${-dir * 1.5}%, ${dir * 1.2}%)`;
+      });
+    } else {
+      requestAnimationFrame(() => el.classList.add('is-on'));
+    }
+
+    cap.classList.remove('is-on');
+    setTimeout(() => { cap.textContent = caption; if (caption) cap.classList.add('is-on'); }, D(700));
+
+    await Promise.race([wait(HOLD), skip]);
+
+    const prev = stage.children[0];
+    if (prev && prev !== el) { prev.classList.remove('is-on'); setTimeout(() => prev.remove(), 1700); }
+  }
+  cap.classList.remove('is-on');
+}
+
+/* --- Фінальний кадр --- */
+async function runFinal() {
+  $('#finalKicker').textContent = VARIANT.kicker;
+  $('#finalWord').textContent = VARIANT.word;
+  $('#finalLine').textContent = VARIANT.finalLine;
+  $('#photosSkip').hidden = true;
+  await show('final');
+
+  $('#saveBtn').addEventListener('click', () => {
+    try {
+      $('#saveImg').src = renderCard();
+      $('#saveOverlay').hidden = false;
+    } catch (_) {}
+  });
+  $('#saveClose').addEventListener('click', () => $('#saveOverlay').hidden = true);
+}
+
+/* =============================================================
+   Старт
+   ============================================================= */
+async function main() {
+  fillStaticTexts();
+
+  if (!VARIANT) { initHost(); await show('host'); return; }
+
+  Audio_.showBtn();
+  await show('intro');
+
+  const fill = $('#preloadFill');
+  await preload(p => { fill.style.width = (p * 100).toFixed(0) + '%'; });
+  $('#preload').classList.add('is-done');
+  $('#startBtn').disabled = false;
+
+  await new Promise(r => $('#startBtn').addEventListener('click', r, { once: true }));
+  Audio_.unlock();
+  Audio_.els.walk.dataset.wanted = '1';
+  Audio_.play('walk', 2200);
+
+  await runGame();
+  await runVerdict();
+  await runReveal();
+  await runPhotos();
+  await runFinal();
+}
+
+document.addEventListener('DOMContentLoaded', () => { main().catch(() => {}); });
+})();

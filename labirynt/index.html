@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0b1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex, nofollow">
+<title>Лабіринт для двох</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23080c17'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23ffd9a0'/%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%23c9a227' stroke-width='1.5' stroke-dasharray='3 5'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Поворот екрана: м'яке прохання повернути телефон -->
+<div id="rotate" class="rotate-gate">
+  <div class="rotate-inner">
+    <div class="rotate-icon">⟲</div>
+    <p>Поверніть телефон вертикально</p>
+  </div>
+</div>
+
+<!-- Кнопка звуку -->
+<button id="soundToggle" class="sound-toggle" type="button" aria-label="Звук" hidden>
+  <span class="sound-on">♪</span><span class="sound-off">♪</span>
+</button>
+
+<main id="stage" class="stage">
+
+  <!-- 1. Екран ведучого (без ?s=) -->
+  <section class="screen" data-screen="host">
+    <div class="screen-inner host">
+      <p class="host-eyebrow">Тільки для тебе</p>
+      <h1 class="host-title">Лабіринт для двох</h1>
+      <p class="host-note">Обери, що сказав лікар. Отримаєш посилання — надішли його парі. На їхньому екрані нічого не видно.</p>
+      <div class="host-buttons">
+        <button class="btn btn-host" data-secret="north" type="button">Хлопчик</button>
+        <button class="btn btn-host" data-secret="south" type="button">Дівчинка</button>
+      </div>
+      <div id="hostLink" class="host-link" hidden>
+        <code id="hostLinkText"></code>
+        <button class="btn btn-ghost" id="hostCopy" type="button">Копіювати</button>
+        <p class="host-hint" id="hostCopied" hidden>Скопійовано</p>
+      </div>
+      <p class="host-foot">Це посилання — одноразовий подарунок. Не відкривай його поруч із ними.</p>
+    </div>
+  </section>
+
+  <!-- 2. Інтро -->
+  <section class="screen" data-screen="intro">
+    <div class="screen-inner intro">
+      <div class="intro-mark" aria-hidden="true">
+        <svg viewBox="0 0 120 120" class="intro-glyph">
+          <circle cx="60" cy="60" r="46" class="glyph-ring"/>
+          <circle cx="60" cy="60" r="7" class="glyph-core"/>
+        </svg>
+      </div>
+      <h1 id="introTitle" class="intro-title"></h1>
+      <p id="introText" class="intro-text"></p>
+      <p class="intro-sound">Увімкніть звук на телефоні — вимкніть беззвучний режим</p>
+      <div id="preload" class="preload"><span class="preload-bar"><i id="preloadFill"></i></span></div>
+      <button id="startBtn" class="btn btn-primary" type="button" disabled>Почати</button>
+    </div>
+  </section>
+
+  <!-- 3. Передача телефону -->
+  <section class="screen" data-screen="handoff">
+    <div class="screen-inner handoff">
+      <div id="handoffDot" class="handoff-dot"></div>
+      <p class="handoff-lead">Передайте телефон</p>
+      <h2 id="handoffName" class="handoff-name"></h2>
+    </div>
+  </section>
+
+  <!-- 4. Гра: лабіринт + запитання -->
+  <section class="screen" data-screen="game">
+    <div class="screen-inner game">
+      <div class="maze-wrap">
+        <svg id="maze" class="maze" viewBox="0 0 360 360" aria-hidden="true">
+          <defs>
+            <radialGradient id="centreGlow">
+              <stop offset="0%"   stop-color="#fff3dc" stop-opacity="1"/>
+              <stop offset="18%"  stop-color="#ffd9a0" stop-opacity="0.72"/>
+              <stop offset="52%"  stop-color="#f0b56b" stop-opacity="0.22"/>
+              <stop offset="100%" stop-color="#f0b56b" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="3.2"/>
+            </filter>
+            <filter id="softer" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur stdDeviation="7"/>
+            </filter>
+          </defs>
+
+          <g id="mazeDecor" class="maze-decor"></g>
+
+          <path id="pathA" class="maze-path" d="M 34 328 C 62 300, 58 272, 88 258 C 120 243, 152 252, 160 224 C 168 197, 138 182, 112 172 C 86 162, 74 136, 92 116 C 110 96, 142 104, 154 122 C 165 138, 160 156, 172 168 C 175 172, 178 176, 180 180"/>
+          <path id="pathB" class="maze-path" d="M 326 34 C 300 66, 268 62, 250 88 C 232 114, 246 140, 272 148 C 300 157, 316 184, 300 210 C 284 236, 250 236, 232 218 C 216 202, 218 186, 206 180 C 196 175, 188 178, 180 180"/>
+
+          <g id="centre" class="centre">
+            <circle cx="180" cy="180" r="54" fill="url(#centreGlow)" class="centre-halo"/>
+            <circle cx="180" cy="180" r="9" class="centre-core"/>
+          </g>
+
+          <g id="lanternsA"></g>
+          <g id="lanternsB"></g>
+          <g id="chipA" class="chip"><circle r="8" class="chip-glow" filter="url(#soft)"/><circle r="4.6" class="chip-core"/></g>
+          <g id="chipB" class="chip"><circle r="8" class="chip-glow" filter="url(#soft)"/><circle r="4.6" class="chip-core"/></g>
+        </svg>
+      </div>
+
+      <div class="q-block">
+        <p id="qWho" class="q-who"></p>
+        <h2 id="qText" class="q-text"></h2>
+        <div id="qAnswers" class="q-answers"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Вердикт -->
+  <section class="screen" data-screen="verdict">
+    <div class="screen-inner verdict">
+      <h2 id="verdictTitle" class="verdict-title"></h2>
+      <div class="scale"><i id="scaleFill" class="scale-fill"></i></div>
+      <p id="scaleLabel" class="scale-label"></p>
+      <ul id="portrait" class="portrait"></ul>
+      <button id="verdictNext" class="btn btn-primary" type="button" hidden>Далі</button>
+    </div>
+  </section>
+
+  <!-- 6. Reveal -->
+  <section class="screen" data-screen="reveal">
+    <div class="screen-inner reveal">
+      <div id="revealBefore" class="reveal-before">
+        <p id="revealLead" class="reveal-lead"></p>
+        <button id="heartBtn" class="heart-btn" type="button" aria-label="Разом">
+          <svg viewBox="0 0 100 92" class="heart"><path d="M50 88 C 8 60, 2 34, 16 18 C 29 4, 45 8, 50 22 C 55 8, 71 4, 84 18 C 98 34, 92 60, 50 88 Z"/></svg>
+        </button>
+        <p id="revealHint" class="reveal-hint"></p>
+      </div>
+      <div id="revealAfter" class="reveal-after" hidden>
+        <p id="revealKicker" class="reveal-kicker"></p>
+        <h1 id="revealWord" class="reveal-word"></h1>
+        <p id="revealSub" class="reveal-sub"></p>
+        <button id="revealNext" class="btn btn-primary" type="button" hidden>Далі</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Фото -->
+  <section class="screen" data-screen="photos">
+    <div class="screen-inner photos">
+      <h2 id="photosTitle" class="photos-title"></h2>
+      <div id="photoStage" class="photo-stage"></div>
+      <p id="photoCaption" class="photo-caption"></p>
+      <button id="photosSkip" class="btn btn-ghost photos-skip" type="button">Далі</button>
+    </div>
+  </section>
+
+  <!-- 8. Фінальний кадр -->
+  <section class="screen" data-screen="final">
+    <div class="screen-inner final">
+      <div id="finalCard" class="final-card">
+        <div class="final-ribbons"><i class="rib rib-a"></i><i class="rib rib-b"></i></div>
+        <p id="finalKicker" class="final-kicker"></p>
+        <h1 id="finalWord" class="final-word"></h1>
+        <p id="finalLine" class="final-line"></p>
+      </div>
+      <button id="saveBtn" class="btn btn-primary" type="button">Зберегти на згадку</button>
+    </div>
+  </section>
+
+</main>
+
+<canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
+<div id="flash" class="flash" aria-hidden="true"></div>
+
+<!-- Оверлей збереження картки -->
+<div id="saveOverlay" class="save-overlay" hidden>
+  <div class="save-inner">
+    <img id="saveImg" alt="Фінальна картка">
+    <p class="save-hint">Утримайте зображення → «Додати у Фото»</p>
+    <button id="saveClose" class="btn btn-ghost" type="button">Закрити</button>
+  </div>
+</div>
+
+<audio id="aWalk" preload="auto" loop playsinline></audio>
+<audio id="aReveal" preload="auto" playsinline></audio>
+<audio id="aMemories" preload="auto" loop playsinline></audio>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="content.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
