@@ -16,21 +16,48 @@ const D = k => Math.round(k * (REDUCED ? 0.35 : 1));   // тривалості
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
 /* ---------- Секрет ---------- *
- * ?s=north → хлопчик, ?s=south → дівчинка. Параметр зчитується один раз
- * і негайно стирається з адресного рядка: на екрані його не видно,
- * у консоль він не потрапляє ніколи.                                    */
-const SECRET = (() => {
+ * Стать не лежить у коді відкрито: у content.js тільки `secretToken` —
+ * відбиток пари (пін-код + стать). Правильний пін-код і відмикає двері,
+ * і водночас розкриває, який із варіантів справжній.
+ * `?s=` лишається чорним ходом для Ігоря — щоб прогнати сценарій без коду;
+ * параметр стирається з адреси одразу, як і раніше.                        */
+const OVERRIDE = (() => {
   let s = null;
   try {
     const v = new URLSearchParams(location.search).get('s');
-    if (v === 'north' || v === 'south') s = v;
+    if (v && C.variants[v]) s = v;
   } catch (_) {}
   if (location.search) {
     history.replaceState(null, '', location.pathname + location.hash);
   }
   return s;
 })();
-const VARIANT = SECRET ? C.variants[SECRET] : null;
+
+let SECRET = null;
+let VARIANT = null;
+const setSecret = k => { SECRET = k; VARIANT = C.variants[k]; };
+
+const KEY_STORE = 'lab_k';       // пін-код, щоб перезавантаження не замикало двері
+const SEEN_STORE = 'lab_seen';   // заставку вже читали
+
+const ls = {
+  get(k) { try { return localStorage.getItem(k); } catch (_) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (_) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (_) {} }
+};
+
+const checkPin = pin => window.LabHash.slow(String(pin)) === C.lock.pinHash;
+
+/* Який із варіантів справжній — знає тільки пін-код.
+   Якщо жоден не збігся (хтось наплутав із токеном) — беремо перший ключ,
+   а не «правильний»: інакше відповідь лежала б у content.js відкритим текстом. */
+function resolveSecret(pin) {
+  const keys = Object.keys(C.variants);
+  for (const k of keys) {
+    if (window.LabHash.sha256hex('v|' + pin + '|' + k) === C.lock.secretToken) return k;
+  }
+  return keys[0];
+}
 
 /* =============================================================
    Анімаційний хелпер. Використовує GSAP, коли він доступний,
@@ -125,12 +152,14 @@ const Audio_ = (() => {
     await tween(ms, p => { a.volume = Math.max(0, Math.min(1, (from + (to - from) * p) * cap)); }, 'none');
   }
 
-  async function play(k, ms = 1400) {
+  async function play(k, ms = 1400, mult = 1) {
     const a = els[k];
     if (!ok[k] || !a.src || muted) return;
-    a.volume = 0;
-    try { await a.play(); } catch (_) { return; }
-    await fadeTo(k, target[k], ms);
+    if (a.paused) {                       // якщо трек уже грає — не зривати його на нуль
+      a.volume = 0;
+      try { await a.play(); } catch (_) { return; }
+    }
+    await fadeTo(k, target[k] * mult, ms);
   }
 
   async function stop(k, ms = 900) {
@@ -496,31 +525,255 @@ function fillStaticTexts() {
   $('#revealHint').textContent = C.reveal.hint;
   $('#revealNext').textContent = C.reveal.next;
   $('#photosTitle').textContent = C.photos.title;
+  $('#prolHint').textContent = C.prologue.tapHint;
+  $('#gateReplay').textContent = C.gate.replay;
   $('#saveBtn').textContent = C.final.save;
   $('.save-hint').textContent = C.final.saveHint;
 }
 
-/* --- Екран ведучого --- */
+/* --- Панель ведучого: чисте посилання + генератор нового коду --- */
 function initHost() {
-  let chosen = null;
-  $$('.btn-host').forEach(b => b.addEventListener('click', () => {
-    chosen = b.dataset.secret;
-    $$('.btn-host').forEach(o => o.style.opacity = o === b ? '1' : '.35');
-    const url = location.origin + location.pathname + '?s=' + chosen;
-    $('#hostLinkText').textContent = url;
-    $('#hostLink').hidden = false;
-    $('#hostCopied').hidden = true;
-  }));
+  const clean = location.origin + location.pathname;
+  $('#hostLinkText').textContent = clean;
+
   $('#hostCopy').addEventListener('click', async () => {
-    const url = $('#hostLinkText').textContent;
-    try { await navigator.clipboard.writeText(url); }
+    try { await navigator.clipboard.writeText(clean); }
     catch (_) {
       const t = document.createElement('textarea');
-      t.value = url; document.body.append(t); t.select();
+      t.value = clean; document.body.append(t); t.select();
       try { document.execCommand('copy'); } catch (__) {}
       t.remove();
     }
     $('#hostCopied').hidden = false;
+  });
+
+  $$('.btn-host').forEach(b => b.addEventListener('click', () => {
+    const pin = ($('#hostPin').value || '').replace(/\D/g, '');
+    const out = $('#hostOut');
+    if (pin.length < 4 || pin.length > 8) {
+      out.textContent = 'Код має бути з 4–8 цифр.';
+      out.hidden = false;
+      return;
+    }
+    $$('.btn-host').forEach(o => o.style.opacity = o === b ? '1' : '.35');
+    const secret = b.dataset.secret;
+    out.textContent =
+      'pinLength:   ' + pin.length + ',\n' +
+      "pinHash:     '" + window.LabHash.slow(pin) + "',\n" +
+      "secretToken: '" + window.LabHash.sha256hex('v|' + pin + '|' + secret) + "',";
+    out.hidden = false;
+  }));
+
+  $('#hostCheck').addEventListener('click', () => {
+    const pin = ($('#hostPin').value || '').replace(/\D/g, '');
+    const out = $('#hostOut');
+    if (!pin) { out.textContent = 'Введи код, який хочеш перевірити.'; out.hidden = false; return; }
+    if (!checkPin(pin)) {
+      out.textContent = 'Цей код НЕ відчиняє двері.';
+    } else {
+      const k = resolveSecret(pin);
+      out.textContent = 'Код відчиняє двері.\nУ центрі буде: ' + C.variants[k].word + '.';
+    }
+    out.hidden = false;
+  });
+
+  $('#hostReset').addEventListener('click', () => {
+    ls.del(KEY_STORE); ls.del(SEEN_STORE);
+    location.href = clean;
+  });
+}
+
+/* =============================================================
+   Заставка. Кожна сторінка — окремий екран; рядки проявляються
+   один за одним, далі — по дотику будь-де.
+   ============================================================= */
+let prologueTapped = false;
+
+function waitForTap(el) {
+  return new Promise(resolve => {
+    const on = () => { el.removeEventListener('click', on); resolve(); };
+    el.addEventListener('click', on);
+  });
+}
+
+async function runPrologue() {
+  const screen = screens.prologue;
+  const box = $('#prolLines'), hint = $('#prolHint'), dots = $('#prolDots');
+  const pages = C.prologue.pages;
+
+  dots.innerHTML = '';
+  pages.forEach(() => dots.append(document.createElement('i')));
+
+  await show('prologue');
+
+  for (let i = 0; i < pages.length; i++) {
+    const page = pages[i];
+    const tone = page.tone ? C.players[page.tone].color : '';
+    screen.querySelector('.screen-inner').style.setProperty('--tone', tone || 'var(--brass-lit)');
+    [...dots.children].forEach((d, j) => d.classList.toggle('is-on', j === i));
+
+    box.innerHTML = '';
+    hint.classList.remove('is-in');
+    hint.textContent = C.prologue.tapHint;
+
+    const lines = page.lines.map((text, j) => {
+      const el = document.createElement('p');
+      el.className = 'prol-line' + (j === 0 && page.tone ? ' is-lead' : '');
+      el.textContent = text;
+      box.append(el);
+      return el;
+    });
+
+    /* Дотик під час проявлення — показати всю сторінку одразу,
+       щоб швидкий читач не чекав на повільні рядки. */
+    let skip = false;
+    const onSkip = () => { skip = true; };
+    screen.addEventListener('click', onSkip, { once: true });
+
+    for (const el of lines) {
+      if (!skip) await wait(D(560));
+      el.classList.add('is-in');
+    }
+    if (!skip) await wait(D(900));
+    hint.classList.add('is-in');
+    screen.removeEventListener('click', onSkip);
+
+    await waitForTap(screen);
+
+    /* Перший дотик пари — момент, коли можна вмикати звук */
+    if (!prologueTapped) {
+      prologueTapped = true;
+      Audio_.unlock();
+      Audio_.els.walk.dataset.wanted = '1';
+      Audio_.play('walk', 4000, 0.5);       // тихо, тільки як подих
+    }
+
+    if (i < pages.length - 1) {
+      lines.forEach(el => el.classList.remove('is-in'));
+      hint.classList.remove('is-in');
+      await wait(D(620));
+    }
+  }
+  ls.set(SEEN_STORE, '1');
+}
+
+/* =============================================================
+   Замок. Свій набірний пульт — щоб не смикати клавіатуру iOS
+   і не ламати верстку.
+   ============================================================= */
+function buildKeypad() {
+  const pad = $('#keypad');
+  if (pad.children.length) return;
+  const keys = ['1','2','3','4','5','6','7','8','9','', '0','⌫'];
+  keys.forEach(k => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    if (k === '') { b.className = 'key key-blank'; b.disabled = true; }
+    else if (k === '⌫') { b.className = 'key key-wipe'; b.textContent = k; b.dataset.key = 'del'; }
+    else { b.className = 'key'; b.textContent = k; b.dataset.key = k; }
+    pad.append(b);
+  });
+}
+
+async function runGate() {
+  for (;;) {
+    const r = await gateOnce();
+    if (r === 'replay') { await runPrologue(); continue; }
+    return r;
+  }
+}
+
+function gateOnce() {
+  const box = $('#gateLines'), ask = $('#gateAsk'), cells = $('#pinCells');
+  const msg = $('#pinMsg'), pad = $('#keypad'), replay = $('#gateReplay');
+  const gate = screens.gate.querySelector('.gate');
+  const N = C.lock.pinLength;
+
+  gate.classList.remove('is-open');
+  pad.classList.remove('is-locked');
+  msg.classList.remove('is-in');
+  buildKeypad();
+
+  box.innerHTML = '';
+  const lines = C.gate.lines.map(t => {
+    const el = document.createElement('p');
+    el.className = 'gate-line';
+    el.textContent = t;
+    box.append(el);
+    return el;
+  });
+  ask.textContent = C.gate.ask;
+  ask.classList.remove('is-in');
+  replay.textContent = C.gate.replay;
+
+  cells.innerHTML = '';
+  const dots = Array.from({ length: N }, () => {
+    const d = document.createElement('i');
+    d.className = 'pin-cell';
+    cells.append(d);
+    return d;
+  });
+  pad.classList.remove('is-in');
+
+  let pin = '';
+  const paint = () => dots.forEach((d, i) => d.classList.toggle('is-set', i < pin.length));
+
+  return new Promise(async resolve => {
+    let done = false;
+    const finish = v => { if (done) return; done = true; cleanup(); resolve(v); };
+
+    const onKey = async e => {
+      const k = e.target.dataset && e.target.dataset.key;
+      if (!k || done) return;
+      msg.classList.remove('is-in');
+      if (k === 'del') { pin = pin.slice(0, -1); paint(); return; }
+      if (pin.length >= N) return;
+      pin += k;
+      paint();
+      if (pin.length === N) await verify();
+    };
+
+    const onReplay = () => finish('replay');
+
+    function cleanup() {
+      pad.removeEventListener('click', onKey);
+      replay.removeEventListener('click', onReplay);
+    }
+
+    async function verify() {
+      pad.classList.add('is-locked');
+      msg.textContent = C.gate.unlocking;
+      msg.classList.add('is-in');
+      await wait(D(420));
+      await new Promise(r => requestAnimationFrame(() => r()));   // дати екрану промалюватись
+
+      const attempt = pin;
+      if (!checkPin(attempt)) {
+        cells.classList.add('is-wrong');
+        msg.textContent = C.gate.wrong;
+        await wait(D(560));
+        cells.classList.remove('is-wrong');
+        pin = ''; paint();
+        pad.classList.remove('is-locked');
+        return;
+      }
+
+      msg.classList.remove('is-in');
+      gate.classList.add('is-open');
+      for (const d of dots) { d.classList.add('is-ok'); await wait(D(90)); }
+      await wait(D(900));
+      finish(attempt);
+    }
+
+    pad.addEventListener('click', onKey);
+    replay.addEventListener('click', onReplay);
+
+    await show('gate');
+    for (const el of lines) { await wait(D(620)); el.classList.add('is-in'); }
+    await wait(D(700));
+    ask.classList.add('is-in');
+    await wait(D(500));
+    pad.classList.add('is-in');
   });
 }
 
@@ -756,13 +1009,33 @@ async function runFinal() {
 async function main() {
   fillStaticTexts();
 
-  if (!VARIANT) { initHost(); await show('host'); return; }
+  /* Панель ведучого живе за #host — у посиланні для пари її немає */
+  if (location.hash === '#host') { initHost(); await show('host'); return; }
 
   Audio_.showBtn();
-  await show('intro');
 
+  /* Ассети вантажаться фоном, поки читається заставка */
   const fill = $('#preloadFill');
-  await preload(p => { fill.style.width = (p * 100).toFixed(0) + '%'; });
+  const preloading = preload(p => { fill.style.width = (p * 100).toFixed(0) + '%'; });
+
+  let key = OVERRIDE;
+
+  if (!key) {
+    const saved = ls.get(KEY_STORE);          // двері вже відчиняли на цьому телефоні
+    if (saved && checkPin(saved)) key = resolveSecret(saved);
+  }
+
+  if (!key) {
+    if (!ls.get(SEEN_STORE)) await runPrologue();
+    const pin = await runGate();
+    ls.set(KEY_STORE, pin);
+    key = resolveSecret(pin);
+  }
+
+  setSecret(key);
+
+  await show('intro');
+  await preloading;
   $('#preload').classList.add('is-done');
   $('#startBtn').disabled = false;
 
@@ -777,6 +1050,12 @@ async function main() {
   await runPhotos();
   await runFinal();
 }
+
+/* Зміна лише хеша не перезавантажує сторінку — тож робимо це самі,
+   інакше додати #host на відкритій вкладці не спрацює. */
+addEventListener('hashchange', () => {
+  if ((location.hash === '#host') !== (current === 'host')) location.reload();
+});
 
 document.addEventListener('DOMContentLoaded', () => { main().catch(() => {}); });
 })();

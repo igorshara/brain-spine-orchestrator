@@ -96,19 +96,92 @@ p{margin:0;line-height:1.55}
 .btn-ghost{background:transparent;border-color:rgba(239,227,205,.22);color:var(--paper-dim);font-size:14px;padding:11px 22px}
 .btn-host{background:transparent;border-color:rgba(239,227,205,.3);color:var(--ink);flex:1}
 
-/* ---------- Екран ведучого ---------- */
+/* ---------- Панель ведучого ---------- */
+.host{text-align:left}
 .host-eyebrow{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--brass);opacity:.8}
-.host-title{font-size:30px;margin:14px 0 18px}
-.host-note{font-size:15px;color:var(--paper-dim);margin-bottom:26px}
-.host-buttons{display:flex;gap:12px}
-.host-link{margin-top:24px;display:flex;flex-direction:column;gap:12px;align-items:center}
-.host-link code{
-  font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--brass-lit);
-  background:rgba(255,255,255,.04);border:1px solid rgba(233,199,102,.2);
-  border-radius:10px;padding:10px 12px;word-break:break-all;width:100%;text-align:left
-}
+.host-title{font-size:26px;margin:12px 0 26px}
+.host-block{padding:18px 0;border-top:1px solid rgba(239,227,205,.1);display:flex;
+  flex-direction:column;gap:10px;align-items:flex-start}
+.host-label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--paper-dim);opacity:.7}
+.host-note{font-size:13.5px;color:var(--paper-dim);line-height:1.55}
+.host-note code,.host-block > code,.host-out{
+  font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--brass-lit)}
+.host-block > code{background:rgba(255,255,255,.04);border:1px solid rgba(233,199,102,.2);
+  border-radius:10px;padding:10px 12px;word-break:break-all;width:100%}
+.host-input{font:inherit;font-size:17px;letter-spacing:.3em;width:100%;
+  background:rgba(255,255,255,.04);border:1px solid rgba(239,227,205,.16);
+  border-radius:12px;padding:12px 14px;color:var(--ink)}
+.host-buttons{display:flex;gap:10px;width:100%}
+.host-out{background:rgba(255,255,255,.04);border:1px solid rgba(233,199,102,.2);
+  border-radius:10px;padding:12px;width:100%;white-space:pre-wrap;word-break:break-all;
+  line-height:1.7;margin:0}
 .host-hint{font-size:13px;color:var(--a)}
-.host-foot{margin-top:32px;font-size:12.5px;color:rgba(200,189,169,.6);line-height:1.6}
+.host-foot{margin-top:26px;font-size:12.5px;color:rgba(200,189,169,.55);line-height:1.6}
+
+/* ---------- Заставка ---------- */
+.prologue{display:flex;flex-direction:column;justify-content:center;min-height:100%}
+.prol-lines{display:flex;flex-direction:column;gap:12px}
+.prol-line{font-size:19px;line-height:1.5;color:var(--ink);text-wrap:balance;
+  opacity:0;transform:translateY(9px);
+  transition:opacity 1.1s var(--ease),transform 1.1s var(--ease)}
+.prol-line.is-in{opacity:1;transform:none}
+.prol-line.is-lead{font-size:26px;color:var(--tone,var(--brass-lit));letter-spacing:.01em}
+.prol-hint{margin-top:44px;font-size:11.5px;letter-spacing:.28em;text-transform:uppercase;
+  color:rgba(200,189,169,.42);opacity:0;transition:opacity 1s var(--ease)}
+.prol-hint.is-in{opacity:1;animation:hint 3.4s ease-in-out infinite}
+@keyframes hint{0%,100%{opacity:.32}50%{opacity:.7}}
+.prol-dots{display:flex;gap:7px;justify-content:center;margin-top:26px}
+.prol-dots i{width:4px;height:4px;border-radius:50%;background:rgba(239,227,205,.18);
+  transition:background .6s var(--ease),transform .6s var(--ease)}
+.prol-dots i.is-on{background:var(--tone,var(--brass));transform:scale(1.35)}
+
+/* ---------- Замок ---------- */
+.gate{display:flex;flex-direction:column;align-items:center;gap:0}
+.lock-mark{margin-bottom:22px}
+.lock-glyph{width:72px;height:72px}
+.lock-ring{fill:none;stroke:rgba(233,199,102,.3);stroke-width:1;stroke-dasharray:3 8;
+  transform-origin:50px 50px;animation:spin 60s linear infinite}
+.lock-ring2{fill:none;stroke:rgba(233,199,102,.14);stroke-width:1}
+.lock-hole{fill:none;stroke:var(--brass-lit);stroke-width:2.4;stroke-linecap:round;opacity:.75}
+.gate.is-open .lock-hole{opacity:1;stroke:var(--centre)}
+.gate.is-open .lock-ring{animation:spin 2.4s linear infinite;stroke:rgba(255,217,160,.6)}
+
+.gate-lines{display:flex;flex-direction:column;gap:8px}
+.gate-line{font-size:17px;line-height:1.5;color:var(--paper-dim);text-wrap:balance;
+  opacity:0;transform:translateY(8px);transition:opacity 1s var(--ease),transform 1s var(--ease)}
+.gate-line.is-in{opacity:1;transform:none}
+.gate-ask{margin-top:22px;font-size:15px;color:var(--paper);opacity:0;
+  transition:opacity 1s var(--ease)}
+.gate-ask.is-in{opacity:1}
+
+.pin-cells{display:flex;gap:10px;margin-top:30px}
+.pin-cell{width:14px;height:14px;border-radius:50%;border:1px solid rgba(233,199,102,.38);
+  transition:background .3s var(--ease),border-color .3s var(--ease),transform .3s var(--ease)}
+.pin-cell.is-set{background:var(--brass-lit);border-color:var(--brass-lit)}
+.pin-cell.is-ok{background:var(--centre);border-color:var(--centre);transform:scale(1.25)}
+.pin-cells.is-wrong{animation:shake .5s var(--ease)}
+@keyframes shake{
+  0%,100%{transform:translateX(0)} 18%{transform:translateX(-7px)}
+  38%{transform:translateX(6px)} 58%{transform:translateX(-4px)} 78%{transform:translateX(3px)}
+}
+.pin-msg{margin-top:16px;font-size:13px;letter-spacing:.06em;color:var(--paper-dim);
+  min-height:1.3em;opacity:0;transition:opacity .5s var(--ease)}
+.pin-msg.is-in{opacity:.85}
+
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:26px;
+  width:min(100%,268px);opacity:0;transition:opacity 1s var(--ease)}
+.keypad.is-in{opacity:1}
+.key{font:inherit;font-size:21px;color:var(--ink);height:56px;cursor:pointer;
+  background:rgba(255,255,255,.035);border:1px solid rgba(239,227,205,.12);border-radius:14px;
+  transition:background .2s var(--ease),transform .2s var(--ease)}
+.key:active{background:rgba(255,255,255,.11);transform:scale(.95)}
+.key-wipe{font-size:15px;color:var(--paper-dim)}
+.key-blank{background:none;border:0;cursor:default}
+.keypad.is-locked .key{pointer-events:none;opacity:.35}
+
+.gate-replay{margin-top:28px;background:none;border:0;font:inherit;font-size:12.5px;
+  letter-spacing:.06em;color:rgba(200,189,169,.42);text-decoration:underline;
+  text-underline-offset:4px;cursor:pointer}
 
 /* ---------- Інтро ---------- */
 .intro-mark{margin-bottom:26px}

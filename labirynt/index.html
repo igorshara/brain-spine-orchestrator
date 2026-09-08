@@ -28,22 +28,68 @@
 
 <main id="stage" class="stage">
 
-  <!-- 1. Екран ведучого (без ?s=) -->
+  <!-- 1. Панель ведучого — тільки за адресою з #host -->
   <section class="screen" data-screen="host">
     <div class="screen-inner host">
-      <p class="host-eyebrow">Тільки для тебе</p>
+      <p class="host-eyebrow">Панель ведучого</p>
       <h1 class="host-title">Лабіринт для двох</h1>
-      <p class="host-note">Обери, що сказав лікар. Отримаєш посилання — надішли його парі. На їхньому екрані нічого не видно.</p>
-      <div class="host-buttons">
-        <button class="btn btn-host" data-secret="north" type="button">Хлопчик</button>
-        <button class="btn btn-host" data-secret="south" type="button">Дівчинка</button>
-      </div>
-      <div id="hostLink" class="host-link" hidden>
+
+      <div class="host-block">
+        <p class="host-label">Посилання для пари</p>
         <code id="hostLinkText"></code>
         <button class="btn btn-ghost" id="hostCopy" type="button">Копіювати</button>
         <p class="host-hint" id="hostCopied" hidden>Скопійовано</p>
       </div>
-      <p class="host-foot">Це посилання — одноразовий подарунок. Не відкривай його поруч із ними.</p>
+
+      <div class="host-block">
+        <p class="host-label">Змінити код або стать</p>
+        <p class="host-note">Введи новий код, обери, що сказав лікар — і встав
+          три рядки, що з'являться нижче, у <code>content.js</code>, у блок <code>lock</code>.</p>
+        <input id="hostPin" class="host-input" type="text" inputmode="numeric"
+               autocomplete="off" placeholder="новий код, 4–8 цифр">
+        <div class="host-buttons">
+          <button class="btn btn-host" data-secret="north" type="button">Хлопчик</button>
+          <button class="btn btn-host" data-secret="south" type="button">Дівчинка</button>
+        </div>
+        <button class="btn btn-ghost" id="hostCheck" type="button">Перевірити чинний код</button>
+        <pre id="hostOut" class="host-out" hidden></pre>
+      </div>
+
+      <div class="host-block">
+        <button class="btn btn-ghost" id="hostReset" type="button">Пройти самому спочатку</button>
+        <p class="host-note">Скидає «замок уже відчинено» на цьому телефоні.</p>
+      </div>
+
+      <p class="host-foot">Цю сторінку паре не показувати. Посилання вище — чисте:
+        ані коду, ані статі в ньому немає.</p>
+    </div>
+  </section>
+
+  <!-- 1b. Заставка -->
+  <section class="screen" data-screen="prologue">
+    <div class="screen-inner prologue">
+      <div id="prolLines" class="prol-lines"></div>
+      <p id="prolHint" class="prol-hint"></p>
+      <div id="prolDots" class="prol-dots" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <!-- 1c. Замок -->
+  <section class="screen" data-screen="gate">
+    <div class="screen-inner gate">
+      <div class="lock-mark" aria-hidden="true">
+        <svg viewBox="0 0 100 100" class="lock-glyph">
+          <circle cx="50" cy="50" r="40" class="lock-ring"/>
+          <circle cx="50" cy="50" r="31" class="lock-ring2"/>
+          <path d="M50 38 a7 7 0 1 1 -0.01 0 M50 45 L50 62" class="lock-hole"/>
+        </svg>
+      </div>
+      <div id="gateLines" class="gate-lines"></div>
+      <p id="gateAsk" class="gate-ask"></p>
+      <div id="pinCells" class="pin-cells"></div>
+      <p id="pinMsg" class="pin-msg">&nbsp;</p>
+      <div id="keypad" class="keypad"></div>
+      <button id="gateReplay" class="gate-replay" type="button"></button>
     </div>
   </section>
 
@@ -190,6 +236,7 @@
 <audio id="aMemories" preload="auto" loop playsinline></audio>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="lib/sha256.js"></script>
 <script src="content.js"></script>
 <script src="app.js"></script>
 </body>
