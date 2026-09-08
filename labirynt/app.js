@@ -28,7 +28,7 @@ const OVERRIDE = (() => {
     if (v && C.variants[v]) s = v;
   } catch (_) {}
   if (location.search) {
-    history.replaceState(null, '', location.pathname + location.hash);
+    try { history.replaceState(null, '', location.pathname + location.hash); } catch (_) {}
   }
   return s;
 })();
@@ -116,7 +116,7 @@ const Audio_ = (() => {
   const els = { walk: $('#aWalk'), reveal: $('#aReveal'), memories: $('#aMemories') };
   const ok = { walk: false, reveal: false, memories: false };
   const target = { walk: 0.34, reveal: 0.8, memories: 0.4 };   // стеля гучності
-  let muted = localStorage.getItem('lab_muted') === '1';
+  let muted = ls.get('lab_muted') === '1';   // тільки через обгортку: пряме звернення кидає в приватній вкладці
   let unlocked = false;
   const btn = $('#soundToggle');
 
@@ -176,9 +176,18 @@ const Audio_ = (() => {
     btn.classList.toggle('is-muted', muted);
     btn.setAttribute('aria-label', muted ? 'Увімкнути звук' : 'Вимкнути звук');
   }
+  /* Довге утримання (1,6 с) — потайний вхід до панелі ведучого.
+     Випадково не спрацює, а Ігорю не треба дописувати #host в адресу. */
+  let longPress = false, holdTimer = null;
+  const hold = () => { holdTimer = setTimeout(() => { longPress = true; location.hash = '#host'; }, 1600); };
+  const release = () => clearTimeout(holdTimer);
+  btn.addEventListener('pointerdown', hold);
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(e => btn.addEventListener(e, release));
+
   btn.addEventListener('click', () => {
+    if (longPress) { longPress = false; return; }   // це був вхід у панель, не перемикач
     muted = !muted;
-    localStorage.setItem('lab_muted', muted ? '1' : '0');
+    ls.set('lab_muted', muted ? '1' : '0');
     Object.keys(els).forEach(k => {
       if (muted) els[k].volume = 0;
       else if (!els[k].paused) els[k].volume = target[k];
