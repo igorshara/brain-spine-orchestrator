@@ -621,6 +621,33 @@ function waitForTap(el) {
   });
 }
 
+/* Один обробник жестів на всю сторінку заставки.
+   Свайп — це намір гортати, тож він гортає навіть під час проявлення рядків;
+   тап під час проявлення — «покажи все одразу», тап на готовій — далі.
+   Поріг 44 px і вимога, щоб рух був радше горизонтальним: інакше кожне
+   здригання руки гортало б сторінку. */
+function onGesture(el, cb) {
+  const MIN = 44;
+  let x0 = 0, y0 = 0, down = false;
+  const onDown = e => { down = true; x0 = e.clientX; y0 = e.clientY; };
+  const onCancel = () => { down = false; };
+  const onUp = e => {
+    if (!down) return;
+    down = false;
+    const dx = e.clientX - x0, dy = e.clientY - y0;
+    const swipe = Math.abs(dx) >= MIN && Math.abs(dx) > Math.abs(dy);
+    cb(swipe ? (dx < 0 ? 1 : -1) : 0);          // 1 — далі, -1 — назад, 0 — тап
+  };
+  el.addEventListener('pointerdown', onDown);
+  el.addEventListener('pointerup', onUp);
+  el.addEventListener('pointercancel', onCancel);
+  return () => {
+    el.removeEventListener('pointerdown', onDown);
+    el.removeEventListener('pointerup', onUp);
+    el.removeEventListener('pointercancel', onCancel);
+  };
+}
+
 /* Хто відкрив посилання. Перший дотик пари — тут, тож саме звідси
    починається музика заставки. Вибір запам'ятовується на цьому телефоні. */
 async function runWho() {
@@ -676,7 +703,7 @@ async function runPrologue(who) {
 
   await show('prologue');
 
-  for (let i = 0; i < pages.length; i++) {
+  for (let i = 0; i < pages.length; ) {
     const page = pages[i];
     const tone = page.tone ? C.players[page.tone].color : '';
     screen.querySelector('.screen-inner').style.setProperty('--tone', tone || 'var(--brass-lit)');
@@ -694,11 +721,16 @@ async function runPrologue(who) {
       return el;
     });
 
-    /* Дотик під час проявлення — показати всю сторінку одразу,
-       щоб швидкий читач не чекав на повільні рядки. */
-    let skip = false;
-    const onSkip = () => { skip = true; startPrologueAudio(); };
-    screen.addEventListener('click', onSkip, { once: true });
+    let skip = false, shown = false, resolveNav = null;
+    const nav = new Promise(r => { resolveNav = r; });
+
+    const detach = onGesture(screen, g => {
+      startPrologueAudio();
+      if (g === -1 && i === 0) return;                       // назад із першої нікуди — не переграємо її
+      if (g !== 0) { skip = true; resolveNav(g); return; }   // свайп гортає одразу
+      if (!shown) { skip = true; return; }                   // тап під час проявлення — показати все
+      resolveNav(1);                                         // тап на готовій сторінці — далі
+    });
 
     for (const el of lines) {
       if (!skip) await wait(D(560));
@@ -706,17 +738,18 @@ async function runPrologue(who) {
     }
     if (!skip) await wait(D(900));
     hint.classList.add('is-in');
-    screen.removeEventListener('click', onSkip);
+    shown = true;
 
-    await waitForTap(screen);
+    const dir = await nav;
+    detach();
 
-    startPrologueAudio();
-
-    if (i < pages.length - 1) {
+    const next = Math.max(0, i + dir);
+    if (next !== i && next < pages.length) {
       lines.forEach(el => el.classList.remove('is-in'));
       hint.classList.remove('is-in');
       await wait(D(620));
     }
+    i = next;
   }
   ls.set(SEEN_STORE, '1');
 }

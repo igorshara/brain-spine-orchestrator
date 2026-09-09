@@ -42,15 +42,41 @@
 пропускає заставку й замок. Параметр стирається з адреси одразу, у консоль
 не потрапляє. **Паре це посилання не давати.**
 
+## Посилання в месенджері
+
+`index.html` містить og-теги: коли посилання кидають у Telegram чи iMessage,
+воно розгортається карткою — латунне коло, «Лабіринт для двох», «Пройдіть його
+разом, на одному телефоні». Ані коду, ані статі там немає. Картинка —
+`assets/img/og.jpg` (1200×630), іконка на домашній екран — `assets/img/icon-180.png`.
+
+⚠ Адреса картинки в `og:image` **абсолютна** і зашита на
+`https://labirynt-production.up.railway.app`. Зміниться домен — поміняти й там,
+інакше прев'ю зникне.
+
 ## Деплой на Railway
 
-Це окрема служба, вона нічого не знає про симулятор BSO в корені репо.
+**Живе тут: https://labirynt-production.up.railway.app**
+Окремий проєкт Railway `labirynt-dvoje` (id `cb914357-ff2c-473f-bd17-87a6de1e87e7`),
+служба `labirynt`. З симулятором BSO не має нічого спільного — окремий проєкт,
+не окрема служба в проєкті BSO.
 
-1. Railway → New Service → GitHub Repo → цей репозиторій.
-2. Settings → **Root Directory: `labirynt`**.
-3. Deploy. Далі нічого налаштовувати не треба: `Procfile`, `railway.json`
-   і `requirements.txt` уже лежать усередині теки.
-4. Settings → Networking → Generate Domain. Це і є посилання для пари.
+⚠ **`railway up` бере корінь git-репозиторію, а не теку, з якої запускаєш.**
+Запуск із `labirynt/` заллє весь `brain-spine-orchestrator` і служба підніме
+симулятор замість лабіринту (напоролись 09.09). Тому заливати треба з копії
+поза репозиторієм:
+
+```bash
+rm -rf /tmp/lab && mkdir /tmp/lab
+cd labirynt && tar cf - . | (cd /tmp/lab && tar xf -)
+cd /tmp/lab
+railway up --service labirynt \
+  --project cb914357-ff2c-473f-bd17-87a6de1e87e7 \
+  --environment production --detach -y
+```
+
+Щоб позбутися цього кроку назавжди — підключити службу до GitHub-репо і
+виставити Settings → **Root Directory: `labirynt`**; тоді Railway підхоплюватиме
+кожен push сам.
 
 Сервер — `server.py` на stdlib, без залежностей: віддає статику, ассети з
 довгим кешем, код без кешу, будь-який невідомий шлях — назад на `index.html`.
