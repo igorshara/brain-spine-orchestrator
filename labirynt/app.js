@@ -39,6 +39,7 @@ const setSecret = k => { SECRET = k; VARIANT = C.variants[k]; };
 
 const KEY_STORE = 'lab_k';       // пін-код, щоб перезавантаження не замикало двері
 const SEEN_STORE = 'lab_seen';   // заставку вже читали
+const WHO_STORE = 'lab_who';     // хто відкрив посилання: 'a' — Саша, 'b' — Софія
 
 const ls = {
   get(k) { try { return localStorage.getItem(k); } catch (_) { return null; } },
@@ -113,9 +114,10 @@ async function show(name) {
    Якщо файлу немає — застосунок працює далі мовчки.
    ============================================================= */
 const Audio_ = (() => {
-  const els = { walk: $('#aWalk'), reveal: $('#aReveal'), memories: $('#aMemories') };
-  const ok = { walk: false, reveal: false, memories: false };
-  const target = { walk: 0.34, reveal: 0.8, memories: 0.4 };   // стеля гучності
+  const els = { prologue: $('#aPrologue'), walk: $('#aWalk'),
+                reveal: $('#aReveal'), memories: $('#aMemories') };
+  const ok = { prologue: false, walk: false, reveal: false, memories: false };
+  const target = { prologue: 0.5, walk: 0.34, reveal: 0.8, memories: 0.4 };   // стеля гучності
   let muted = ls.get('lab_muted') === '1';   // тільки через обгортку: пряме звернення кидає в приватній вкладці
   let unlocked = false;
   const btn = $('#soundToggle');
@@ -124,9 +126,11 @@ const Audio_ = (() => {
     const src = C.audio[k];
     if (src) els[k].src = src;
     els[k].volume = 0;
+    ok[k] = !!src;          // оптимістично: mp3 грає з потоку, не чекаючи повного файлу
   });
 
   function markReady(k) { ok[k] = true; }
+  function markFailed(k) { ok[k] = false; }   // файлу немає або він битий — далі мовчки
 
   /* Розблокування в момент першого тапу. pause() — СИНХРОННО одразу після
      play(): якщо ставити його в .then(), проміс дорешується вже після того,
@@ -205,7 +209,7 @@ const Audio_ = (() => {
     });
   });
 
-  return { els, markReady, unlock, play, stop, swell, reveal: () => els.reveal,
+  return { els, markReady, markFailed, unlock, play, stop, swell, reveal: () => els.reveal,
            get muted() { return muted; }, showBtn: () => btn.hidden = false };
 })();
 
@@ -222,11 +226,13 @@ async function preload(onProgress) {
     jobs.push(new Promise(res => {
       const a = Audio_.els[k];
       let done = false;
-      const finish = good => { if (done) return; done = true; if (good) Audio_.markReady(k); res(); };
-      a.addEventListener('canplaythrough', () => finish(true), { once: true });
-      a.addEventListener('error', () => finish(false), { once: true });
-      if (a.readyState >= 3) finish(true);
-      setTimeout(() => finish(a.readyState >= 2), 9000);
+      /* Прелоад лише ЧЕКАЄ. Мовчазним трек робить тільки справжня помилка
+         завантаження: повільна мережа не має глушити музику назавжди. */
+      const finish = () => { if (done) return; done = true; res(); };
+      a.addEventListener('canplaythrough', () => { Audio_.markReady(k); finish(); }, { once: true });
+      a.addEventListener('error', () => { Audio_.markFailed(k); finish(); }, { once: true });
+      if (a.readyState >= 3) { Audio_.markReady(k); finish(); }
+      setTimeout(finish, 9000);
       a.load();
     }));
   });
@@ -587,7 +593,7 @@ function initHost() {
   });
 
   $('#hostReset').addEventListener('click', () => {
-    ls.del(KEY_STORE); ls.del(SEEN_STORE);
+    ls.del(KEY_STORE); ls.del(SEEN_STORE); ls.del(WHO_STORE);
     location.href = clean;
   });
 }
@@ -598,6 +604,16 @@ function initHost() {
    ============================================================= */
 let prologueTapped = false;
 
+/* Найперший дотик пари — і той, що проявляє рядки, і той, що гортає, —
+   момент, коли браузер дозволяє звук. Далі музика заставки грає до «Увійти». */
+function startPrologueAudio() {
+  if (prologueTapped) return;
+  prologueTapped = true;
+  Audio_.unlock();
+  Audio_.els.prologue.dataset.wanted = '1';
+  Audio_.play('prologue', 4000);
+}
+
 function waitForTap(el) {
   return new Promise(resolve => {
     const on = () => { el.removeEventListener('click', on); resolve(); };
@@ -605,10 +621,55 @@ function waitForTap(el) {
   });
 }
 
-async function runPrologue() {
+/* Хто відкрив посилання. Перший дотик пари — тут, тож саме звідси
+   починається музика заставки. Вибір запам'ятовується на цьому телефоні. */
+async function runWho() {
+  const saved = ls.get(WHO_STORE);
+  if (saved === 'a' || saved === 'b') return saved;
+
+  $('#whoLead').textContent = C.who.lead;
+  $('#whoSub').textContent = C.who.sub;
+
+  const btns = { a: $('#whoA'), b: $('#whoB') };
+  Object.keys(btns).forEach(k => {
+    btns[k].textContent = C.players[k].name;
+    btns[k].style.setProperty('--tone', C.players[k].color);
+    btns[k].classList.remove('is-in', 'is-picked', 'is-dim');
+  });
+
+  await show('who');
+  Object.keys(btns).forEach((k, i) => setTimeout(() => btns[k].classList.add('is-in'), D(320 + i * 160)));
+
+  const pick = await new Promise(resolve => {
+    Object.keys(btns).forEach(k => btns[k].addEventListener('click', () => {
+      startPrologueAudio();                     // дотик пари — момент, коли можна вмикати звук
+      btns[k].classList.add('is-picked');
+      btns[k === 'a' ? 'b' : 'a'].classList.add('is-dim');
+      resolve(k);
+    }, { once: true }));
+  });
+
+  ls.set(WHO_STORE, pick);
+  await wait(D(760));
+  return pick;
+}
+
+/* Заставка починається зі звертання до того, хто відкрив: сторінки з
+   `tone` міняються місцями, решта лишається як є. Нічого не викидаємо. */
+function pagesFor(who) {
+  const pages = C.prologue.pages.slice();
+  const slots = pages.map((pg, i) => (pg.tone === 'a' || pg.tone === 'b') ? i : -1).filter(i => i >= 0);
+  if (slots.length < 2) return pages;
+  const personal = slots.map(i => pages[i]);
+  personal.sort((x, y) => (x.tone === who ? 0 : 1) - (y.tone === who ? 0 : 1));
+  slots.forEach((slot, n) => { pages[slot] = personal[n]; });
+  return pages;
+}
+
+async function runPrologue(who) {
   const screen = screens.prologue;
   const box = $('#prolLines'), hint = $('#prolHint'), dots = $('#prolDots');
-  const pages = C.prologue.pages;
+  const pages = pagesFor(who);
 
   dots.innerHTML = '';
   pages.forEach(() => dots.append(document.createElement('i')));
@@ -636,7 +697,7 @@ async function runPrologue() {
     /* Дотик під час проявлення — показати всю сторінку одразу,
        щоб швидкий читач не чекав на повільні рядки. */
     let skip = false;
-    const onSkip = () => { skip = true; };
+    const onSkip = () => { skip = true; startPrologueAudio(); };
     screen.addEventListener('click', onSkip, { once: true });
 
     for (const el of lines) {
@@ -649,13 +710,7 @@ async function runPrologue() {
 
     await waitForTap(screen);
 
-    /* Перший дотик пари — момент, коли можна вмикати звук */
-    if (!prologueTapped) {
-      prologueTapped = true;
-      Audio_.unlock();
-      Audio_.els.walk.dataset.wanted = '1';
-      Audio_.play('walk', 4000, 0.5);       // тихо, тільки як подих
-    }
+    startPrologueAudio();
 
     if (i < pages.length - 1) {
       lines.forEach(el => el.classList.remove('is-in'));
@@ -687,7 +742,7 @@ function buildKeypad() {
 async function runGate() {
   for (;;) {
     const r = await gateOnce();
-    if (r === 'replay') { await runPrologue(); continue; }
+    if (r === 'replay') { await runPrologue(ls.get(WHO_STORE) || 'a'); continue; }
     return r;
   }
 }
@@ -1035,7 +1090,7 @@ async function main() {
   }
 
   if (!key) {
-    if (!ls.get(SEEN_STORE)) await runPrologue();
+    if (!ls.get(SEEN_STORE)) await runPrologue(await runWho());
     const pin = await runGate();
     ls.set(KEY_STORE, pin);
     key = resolveSecret(pin);
@@ -1050,6 +1105,8 @@ async function main() {
 
   await new Promise(r => $('#startBtn').addEventListener('click', r, { once: true }));
   Audio_.unlock();
+  Audio_.els.prologue.dataset.wanted = '0';
+  Audio_.stop('prologue', 2200);            // перехресно: одна стихає, друга заходить
   Audio_.els.walk.dataset.wanted = '1';
   Audio_.play('walk', 2200);
 

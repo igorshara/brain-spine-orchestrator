@@ -367,3 +367,19 @@ p{margin:0;line-height:1.55}
 @keyframes flicker{
   0%,100%{opacity:.10} 35%{opacity:.30} 55%{opacity:.14} 78%{opacity:.26}
 }
+
+/* ---------- Хто відкрив ---------- */
+.who-lead{font-size:27px;color:var(--brass-lit);margin-bottom:14px}
+.who-sub{font-size:15px;color:var(--paper-dim);max-width:330px;margin:0 auto 34px;line-height:1.5}
+.who-row{display:flex;gap:12px;justify-content:center}
+.who-btn{
+  font:inherit;font-size:18px;letter-spacing:.02em;color:var(--tone,var(--ink));
+  background:rgba(255,255,255,.035);border:1px solid currentColor;
+  border-radius:16px;padding:16px 26px;min-width:126px;cursor:pointer;
+  opacity:0;transform:translateY(8px);
+  transition:opacity .6s var(--ease),transform .5s var(--ease),background .4s var(--ease);
+}
+.who-btn.is-in{opacity:1;transform:none}
+.who-btn:active{transform:scale(.97)}
+.who-btn.is-picked{background:rgba(255,255,255,.1)}
+.who-btn.is-dim{opacity:.16}
