@@ -209,7 +209,9 @@ const Audio_ = (() => {
     });
   });
 
-  return { els, markReady, markFailed, unlock, play, stop, swell, reveal: () => els.reveal,
+  const has = k => !!(ok[k] && els[k] && els[k].src);
+
+  return { els, markReady, markFailed, unlock, play, stop, swell, has, reveal: () => els.reveal,
            get muted() { return muted; }, showBtn: () => btn.hidden = false };
 })();
 
@@ -538,7 +540,8 @@ function fillStaticTexts() {
   $('#verdictNext').textContent = C.verdict.next;
   $('#revealLead').textContent = C.reveal.lead;
   $('#revealHint').textContent = C.reveal.hint;
-  $('#revealNext').textContent = C.reveal.next;
+  /* Без фото кнопка не може обіцяти «вашу дорогу сюди» — вона веде просто далі */
+  $('#revealNext').textContent = (C.photos.items || []).length ? C.reveal.next : C.reveal.nextAlone;
   $('#photosTitle').textContent = C.photos.title;
   $('#prolHint').textContent = C.prologue.tapHint;
   $('#gateReplay').textContent = C.gate.replay;
@@ -681,16 +684,11 @@ async function runWho() {
   return pick;
 }
 
-/* Заставка починається зі звертання до того, хто відкрив: сторінки з
-   `tone` міняються місцями, решта лишається як є. Нічого не викидаємо. */
+/* Заставка розділена: той, хто відкрив, читає СВОЄ звертання, чуже —
+   не показуємо. Софія бачить сторінку мами, Саша — сторінку тата.
+   Спільні сторінки (без `tone`) бачать обоє. */
 function pagesFor(who) {
-  const pages = C.prologue.pages.slice();
-  const slots = pages.map((pg, i) => (pg.tone === 'a' || pg.tone === 'b') ? i : -1).filter(i => i >= 0);
-  if (slots.length < 2) return pages;
-  const personal = slots.map(i => pages[i]);
-  personal.sort((x, y) => (x.tone === who ? 0 : 1) - (y.tone === who ? 0 : 1));
-  slots.forEach((slot, n) => { pages[slot] = personal[n]; });
-  return pages;
+  return C.prologue.pages.filter(pg => !pg.tone || pg.tone === who);
 }
 
 async function runPrologue(who) {
@@ -992,9 +990,13 @@ async function runReveal() {
   const flash = $('#flash');
   flash.style.background = '#000';
 
-  /* 1. Темрява і тиша */
+  /* 1. Темрява і тиша.
+     Окремого треку на reveal може не бути — тоді хода не йде назовсім,
+     а лише замовкає на час темряви й повертається на спалаху: інакше
+     весь фінал пари пройшов би в тиші. */
+  const hasReveal = Audio_.has('reveal');
   Audio_.stop('walk', 420);
-  Audio_.els.walk.dataset.wanted = '0';
+  if (hasReveal) Audio_.els.walk.dataset.wanted = '0';
   await tween(450, p => { flash.style.opacity = String(p); }, 'power2.in');
 
   $('#revealBefore').hidden = true;
@@ -1013,8 +1015,12 @@ async function runReveal() {
 
   /* 3. Спалах — і в цю ж мить стартує музика */
   flash.style.background = '#fff';
-  Audio_.els.reveal.dataset.wanted = '1';
-  Audio_.play('reveal', 200);
+  if (hasReveal) {
+    Audio_.els.reveal.dataset.wanted = '1';
+    Audio_.play('reveal', 200);
+  } else {
+    Audio_.play('walk', 900, 1.25);        // хода повертається, трохи гучніше
+  }
   Audio_.els.memories.dataset.wanted = '0';
 
   tween(900, p => { flash.style.opacity = String(1 - p); }, 'power2.out');
