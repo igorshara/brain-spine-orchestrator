@@ -714,7 +714,8 @@ async function runPrologue(who) {
     const lines = page.lines.map((text, j) => {
       const el = document.createElement('p');
       el.className = 'prol-line' + (j === 0 && page.tone ? ' is-lead' : '');
-      el.textContent = text;
+      /* Рядок може бути спільний (рядок) або свій для кожного ({a,b}) */
+      el.textContent = typeof text === 'string' ? text : (text[who] || '');
       box.append(el);
       return el;
     });
