@@ -93,12 +93,12 @@ def ad_safety() -> dict:
     _r0, none = ad_simulate("none")
     _r1, pred = ad_simulate("predictive")
     return {
-        "unmanaged_events": none["ad_events"],
-        "predictive_events": pred["ad_events"],
+        "unmanaged_events": none["ad_episodes"],
+        "predictive_events": pred["ad_episodes"],
         "unmanaged_peak_bp_rise": round(none["peak_bp_rise"]),
         "predictive_peak_bp_rise": round(pred["peak_bp_rise"]),
         "first_warning_s": pred["first_warning_s"],
-        "note": "Autonomic dysreflexia is life-threatening; the guardian prevents it predictively.",
+        "note": "Simulation only: the model guardian keeps the BP proxy below its limit in this scenario.",
     }
 
 

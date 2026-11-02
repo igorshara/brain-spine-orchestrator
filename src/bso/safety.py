@@ -40,7 +40,8 @@ class SafetySupervisor:
         # Autonomic-dysreflexia watchdog (organ-distension path). The supervisor
         # owns the AD proxy for the autonomic loop too (canon §3, Layer 5).
         self.autonomic_ad_risk = 0.0
-        self.autonomic_ad_events = 0
+        self.autonomic_ad_events = 0  # episodes, counted at onset
+        self._autonomic_ad_active = False
 
     def update_autonomic_dysreflexia(self, pressure_cmH2O: float, trigger_cmH2O: float) -> bool:
         """Life-safety: distension/pressure below the lesion can provoke AD — a
@@ -48,10 +49,11 @@ class SafetySupervisor:
         watchdog trips. Independent of the per-command stimulation path."""
         over = max(0.0, pressure_cmH2O - trigger_cmH2O)
         self.autonomic_ad_risk = min(1.0, over / 25.0)  # dangerous ~25 cmH2O over trigger
-        if self.autonomic_ad_risk >= 1.0:
+        tripped = self.autonomic_ad_risk >= 1.0
+        if tripped and not self._autonomic_ad_active:
             self.autonomic_ad_events += 1
-            return True
-        return False
+        self._autonomic_ad_active = tripped
+        return tripped
 
     # ------------------------------------------------------------------ e-stop
     def trigger_estop(self, reason: str = "manual e-stop") -> None:

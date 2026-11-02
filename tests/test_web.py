@@ -49,3 +49,31 @@ def test_adaptation_flag_changes_outcome_under_fatigue():
     # Just confirm the parameter plumbing runs end-to-end with adaptation on.
     d = server.run_locomotion({"body": "kinematic", "fatigue": True, "adapt": True, "dur": "10"})
     assert d["metrics"]["safety_events"] >= 0 and d["frames"]
+
+
+def test_healthz_reports_the_running_commit(monkeypatch):
+    import json
+    import threading
+    from http.server import ThreadingHTTPServer
+    from urllib.request import urlopen
+
+    monkeypatch.setenv("RAILWAY_GIT_COMMIT_SHA", "abc123")
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    try:
+        with urlopen(f"http://127.0.0.1:{httpd.server_port}/healthz", timeout=5) as r:
+            assert r.status == 200
+            assert json.load(r) == {"status": "ok", "sha": "abc123"}
+    finally:
+        httpd.shutdown()
+        httpd.server_close()
+        thread.join(timeout=5)
+
+
+def test_running_sha_reads_the_revision_file_of_an_uploaded_tree(monkeypatch, tmp_path):
+    monkeypatch.delenv("RAILWAY_GIT_COMMIT_SHA", raising=False)
+    monkeypatch.setattr(server, "REPO_ROOT", str(tmp_path))
+    assert server.running_sha() == ""
+    (tmp_path / "REVISION").write_text("def456\n", encoding="utf-8")
+    assert server.running_sha() == "def456"

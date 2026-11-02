@@ -45,6 +45,29 @@ def _clamp(v, lo, hi):
     return max(lo, min(hi, v))
 
 
+# The legs swing unloaded (no ground contact), so drive sized for a loaded limb overshoots
+# normal gait ranges. Tuned to keep the knee and ankle near them, not fitted to any person.
+# ILLUSTRATIVE, not clinically validated.
+_UNLOADED_GAIN = {"hamstrings": 0.2, "bifemsh": 0.2, "gastroc": 0.1, "soleus": 0.1,
+                  "tib_ant": 0.2, "vasti": 1.2}
+
+
+# The .osim declares ranges but has no limit forces, so forward dynamics can pass through them.
+# Passive joint stops: (lower, upper) in model degrees; knee_angle is negative in flexion.
+# ILLUSTRATIVE, not clinically validated.
+_JOINT_STOPS = {"hip_flexion": (-30.0, 100.0), "knee_angle": (-120.0, 0.0), "ankle_angle": (-30.0, 25.0)}
+
+
+def _add_joint_stops(model) -> None:
+    """Add a soft passive stop on each leg joint so muscles cannot drive it past anatomy."""
+    import opensim as osim
+    for base, (lo, hi) in _JOINT_STOPS.items():
+        for side in ("r", "l"):
+            stop = osim.CoordinateLimitForce(f"{base}_{side}", hi, 500.0, lo, 500.0, 5.0, 3.0)
+            stop.setName(f"stop_{base}_{side}")
+            model.addForce(stop)
+
+
 def run_muscle_driven(act_series: list[dict], times: list[float], t_start: float = 1.0,
                       duration: float = 3.0, dt_sample: float = 0.05,
                       model_path: str | None = None, with_transforms: bool = False) -> dict:
@@ -64,6 +87,7 @@ def run_muscle_driven(act_series: list[dict], times: list[float], t_start: float
     model = osim.Model(model_path or os.path.abspath(DEFAULT_MODEL))
     for cn in ("pelvis_tx", "pelvis_ty", "pelvis_tilt", "lumbar_extension"):
         model.getCoordinateSet().get(cn).setDefaultLocked(True)
+    _add_joint_stops(model)
 
     ctrl = osim.PrescribedController()
     muscles = model.getMuscles()
@@ -77,7 +101,8 @@ def run_muscle_driven(act_series: list[dict], times: list[float], t_start: float
         grp = f"{side}_{_MUSCLE_DRIVE[base]}"
         fn = osim.PiecewiseLinearFunction()
         for j in sidx:
-            fn.addPoint(times[j] - base_t, _clamp(act_series[j].get(grp, 0.0), 0.02, 1.0))
+            drive = act_series[j].get(grp, 0.0) * _UNLOADED_GAIN.get(base, 1.0)
+            fn.addPoint(times[j] - base_t, _clamp(drive, 0.02, 1.0))
         ctrl.prescribeControlForActuator(nm, fn)
     model.addController(ctrl)
 

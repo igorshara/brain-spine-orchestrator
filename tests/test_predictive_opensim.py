@@ -1,8 +1,7 @@
-"""Shadow Step validated on the OpenSim model (skips if OpenSim is absent).
+"""Shadow Step on the OpenSim model (skips if OpenSim is absent).
 
-The closed-loop activations from the Hill twin (reactive vs predictive) are run
-through the validated gait10dof18musc model; the shadow step must lift the foot
-no lower than reactive on real anatomy — the mechanism beyond the simple twin.
+With joint stops the mechanism shows no clearance gain on this model, so the public
+copy must not claim one. If this test fails, the result changed: update that copy.
 """
 
 from __future__ import annotations
@@ -19,9 +18,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from scenarios.predictive_opensim import _opensim_metrics  # noqa: E402
 
 
-def test_shadow_step_holds_on_validated_opensim_model():
+def test_shadow_step_shows_no_clearance_gain_on_opensim_model():
     reactive = _opensim_metrics("reactive")
     predictive = _opensim_metrics("predictive")
-    assert predictive["mean_clear_cm"] >= reactive["mean_clear_cm"], (
-        f"predictive should not lift lower on real anatomy: "
-        f"pred={predictive['mean_clear_cm']} react={reactive['mean_clear_cm']}")
+    assert predictive["mean_raised_toe_cm"] <= reactive["mean_raised_toe_cm"]
+
+
+def test_public_copy_does_not_claim_the_old_opensim_gain():
+    page = os.path.join(os.path.dirname(__file__), "..", "web", "index.html")
+    with open(page, encoding="utf-8") as f:
+        assert "4.56 → 4.82" not in f.read()

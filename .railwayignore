@@ -1,11 +1,12 @@
 # keep the cloud image small — runtime needs only src/ + web/ (incl. web/cache, web/vendor)
-models/
-docs/
-outputs/
-assets/
-tests/
-scenarios/
-data/
+# шляхи прив'язані до кореня: інакше `assets/` вигризало б і labirynt/assets/
+/models/
+/docs/
+/outputs/
+/assets/
+/tests/
+/scenarios/
+/data/
 __pycache__/
 **/__pycache__/
 *.pyc

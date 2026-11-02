@@ -47,7 +47,10 @@ class ADGuardian:
         return {"warn": warn, "forecast": forecast, "slope": slope, "lead_to_AD_s": lead}
 
 
-def simulate(policy: str, fill_ml_per_s: float = 1.5, dur_s: float = 600.0, dt: float = 0.5):
+REACTIVE_DELAY_S = 5.0  # time from threshold to a started void, ILLUSTRATIVE
+
+
+def simulate(policy: str, fill_ml_per_s: float = 1.5, dur_s: float = 600.0, dt: float = 0.1):
     """policy in {'none','reactive','predictive'}. Returns time series + metrics.
     'reactive' voids only once pressure is already near the danger zone; 'predictive'
     uses the guardian's forecast to void early."""
@@ -58,6 +61,7 @@ def simulate(policy: str, fill_ml_per_s: float = 1.5, dur_s: float = 600.0, dt: 
     coord = StimDrive(organ_drive=0.35, sphincter_relax=0.92)  # coordinated (safe) void
     voiding = False
     first_warn_t = None
+    reactive_due_t = None
     rec = {"t": [], "volume": [], "pressure": [], "bp": [], "warn": []}
     t = 0.0
     n = int(dur_s / dt)
@@ -73,8 +77,11 @@ def simulate(policy: str, fill_ml_per_s: float = 1.5, dur_s: float = 600.0, dt: 
                 voiding = False
         elif policy == "reactive":
             # act only once pressure is already high (near danger) — too late in DSD
-            if bladder.pressure_cmH2O >= 50.0:
+            if bladder.pressure_cmH2O >= 50.0 and reactive_due_t is None:
+                reactive_due_t = t + REACTIVE_DELAY_S
+            if reactive_due_t is not None and t >= reactive_due_t:
                 voiding = True
+                reactive_due_t = None
             if voiding and bladder.volume_ml <= 25:
                 voiding = False
         cmd = AutonomicCommand.VOID if voiding else AutonomicCommand.STORE
@@ -91,7 +98,11 @@ def simulate(policy: str, fill_ml_per_s: float = 1.5, dur_s: float = 600.0, dt: 
         t += dt
     metrics = {
         "policy": policy,
-        "ad_events": len(ad.events),
+        "ad_episodes": len(ad.events),
+        "ad_seconds_above_limit": round(ad.seconds_above_limit, 1),
+        "baseline_bp": ad.baseline_bp,
+        "ad_trigger_pressure": AD_PRESSURE_TRIGGER_cmH2O,
+        "start_volume": round(rec["volume"][0], 1),
         "peak_bp_rise": round(max(b - ad.baseline_bp for b in rec["bp"]), 1),
         "peak_pressure": round(max(rec["pressure"]), 1),
         "first_warning_s": round(first_warn_t, 1) if first_warn_t is not None else None,

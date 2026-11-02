@@ -92,7 +92,7 @@ for both motor and haemodynamic/bladder outcomes.
 **Design consequence:** the `SafetySupervisor` owns an AD watchdog driven by organ
 distension (`update_autonomic_dysreflexia`), with `SAFE_VOID_PRESSURE_cmH2O = 40`
 and an AD blood-pressure-rise flag. In `autonomic_demo.py`, dyssynergic voiding
-breaches both thresholds (≈94 cmH₂O, +51 mmHg) while coordinated neuromodulation
+breaches both thresholds (≈94 cmH₂O, +41 mmHg) while coordinated neuromodulation
 keeps pressure and BP safe — the clinically meaningful contrast.
 
 ## 4b. Why autonomous mapping uses GP Bayesian Optimization

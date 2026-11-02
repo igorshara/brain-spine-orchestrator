@@ -68,3 +68,10 @@ def test_muscle_driven_forward_dynamics_produces_alternating_gait():
     # legs actually moved under muscle action, and alternate left/right
     assert hipR.max() - hipR.min() > 10
     assert np.corrcoef(hipR, hipL)[0, 1] < -0.2
+    # joints stay inside anatomy: the knee must not bend backwards
+    for side in ("R", "L"):
+        knee = np.array(res[f"{side}_knee"])
+        assert knee.min() > -3
+        assert knee.max() < 85
+        ankle = np.array(res[f"{side}_ankle"])
+        assert ankle.min() > -35 and ankle.max() < 30

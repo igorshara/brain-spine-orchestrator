@@ -1,6 +1,8 @@
 # Shadow Step — explained
 
-**BSO's first own invention, built and validated on the digital twin.**
+> Correction, 2026-11-02: a dated snapshot. The OpenSim claim for Shadow step is retracted: re-running it gave no gain (raised-foot toe 12.69 to 11.83 cm). Current figures are in `validation.md`.
+
+**BSO's first own invention, built and tested on the digital twin.**
 For: Igor Sharanda · 2026-06-29 · all numbers ILLUSTRATIVE (research simulation)
 
 ---
@@ -43,7 +45,7 @@ That is the goal of the invention — **better gait for less current**. And we d
 ## What it honestly means (and the limits)
 
 - It does **not restore walking** by itself. It is one brick — making each step cleaner and cheaper in current, once stimulation already works.
-- The gain is still **modest** (single-digit %) and on a **simplified** twin. Next step: the full validated OpenSim model (18 Hill muscles), where the effect should be sharper.
+- The gain is still **modest** (single-digit %) and on a **simplified** twin. The later test on the full OpenSim model (18 Hill muscles) showed no gain (raised-foot toe 12.69 to 11.83 cm).
 - All numbers are **illustrative** — a simulation, not a clinical result and not a medical device.
 - The real value here is the **method**: we can take an idea, run an honest experiment, find the condition under which it works (and say so plainly when it doesn't). That makes us a lab, not a talking shop.
 

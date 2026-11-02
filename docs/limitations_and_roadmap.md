@@ -12,9 +12,9 @@ benchmarks but applied to synthetic data). Then the concrete path to make it rea
 |---|---|---|
 | Safety supervisor (veto, hard limits, e-stop, AD watchdog) | **REAL** | Deterministic, fully test-covered; the design is genuine and regulator-legible |
 | Layered orchestration architecture (decoder→CPG→effectors→safety→body→feedback→adaptation) | **REAL** | Sound software architecture; swappable bodies behind one interface |
-| GP Bayesian Optimization for parameter search | **ALGORITHM** | Correct (validated: 100% vs 22% random on needle benchmark); applied to a *synthetic* response surface |
+| GP Bayesian Optimization for parameter search | **ALGORITHM** | Correct on the needle benchmark (100% vs 22% random). On the *synthetic* stimulation space there is no advantage at 20 queries (31% vs 40% random) |
 | Body — kinematic / planar MuJoCo | **TOY** | A 3-segment planar walker is not credible biomechanics to an expert |
-| Body — **validated OpenSim model** (gait10dof18musc, 18 Hill muscles) | **REAL** | Two modes: (a) kinematics-driven analysis (`opensim_gait.py`); (b) **muscle-driven forward dynamics** — legs move under muscle forces from our excitations, alternating gait (`opensim_muscle_driven.py`). Remaining: ground contact / weight-bearing (currently body-weight supported) |
+| Body — **published OpenSim model** (gait10dof18musc, 18 Hill muscles, validated by its authors) | **REAL** | Two modes: (a) kinematics-driven analysis (`opensim_gait.py`); (b) **muscle-driven forward dynamics** — legs move under muscle forces from our excitations, alternating gait (`opensim_muscle_driven.py`). Remaining: ground contact / weight-bearing (currently body-weight supported) |
 | Body — Hill muscle layer | **ALGORITHM/TOY** | Real Hill equations, but a reduced model, not a validated musculoskeletal model |
 | Electrode→muscle recruitment | **TOY** | Hand-authored Gaussian current-spread; "83% recovery" is circular (recovers our own assumption) |
 | Bladder / bowel / erectile models | **TOY** | Reduced ODE/state models; the dyssynergia contrast is built into assumptions |
@@ -23,7 +23,7 @@ benchmarks but applied to synthetic data). Then the concrete path to make it rea
 
 ## What an expert will (rightly) object to, and our answer
 
-1. **"The walking figure is a cartoon."** Addressed: we now drive the **validated
+1. **"The walking figure is a cartoon."** Addressed: we now drive the **published
    OpenSim `gait10dof18musc` model** (18 Hill muscle-tendon units) with our orchestrator's
    gait and report real muscle-tendon excursions and anatomical segment geometry
    (`opensim_gait.py`), run **muscle-driven forward dynamics** (`opensim_muscle_driven.py`),

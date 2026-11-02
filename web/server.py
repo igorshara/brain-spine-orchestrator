@@ -36,6 +36,18 @@ REPO_ROOT = os.path.abspath(os.path.join(HERE, ".."))
 SRC_EXT = (".py", ".md", ".sql", ".txt", ".toml", ".cfg", ".json")
 
 
+def running_sha():
+    """Commit being served: Railway's variable on a Git deploy, else the REVISION file of an uploaded tree."""
+    sha = os.environ.get("RAILWAY_GIT_COMMIT_SHA", "")
+    if sha:
+        return sha
+    try:
+        with open(os.path.join(REPO_ROOT, "REVISION"), encoding="utf-8") as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
 def read_source(rel):
     """Serve a source file from inside the repo so any dashboard block can drill
     down to the code behind it. Sandboxed: the resolved path must stay under the
@@ -149,7 +161,9 @@ def run_guardian(p):
         rec, m = simulate(pol)
         st = max(1, len(rec["t"]) // 200)
         out[pol] = {"t": [round(x, 1) for x in rec["t"][::st]],
-                    "bp": [round(x, 1) for x in rec["bp"][::st]], "metrics": m}
+                    "bp": [round(x, 1) for x in rec["bp"][::st]],
+                    "pressure": [round(x, 1) for x in rec["pressure"][::st]],
+                    "volume": [round(x, 1) for x in rec["volume"][::st]], "metrics": m}
     return out
 
 
@@ -182,6 +196,10 @@ def run_mapping(p):
     }
 
 
+VALID_DECISIONS = ("approve", "reject", "modify")
+APP_CTYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
+              ".js": "application/javascript; charset=utf-8", ".png": "image/png",
+              ".jpg": "image/jpeg", ".webp": "image/webp", ".svg": "image/svg+xml"}
 CACHE_DIR = os.path.join(HERE, "cache")
 import tempfile  # noqa: E402
 CLINIC_DB = os.path.join(tempfile.gettempdir(), "bso_clinic.db")  # clinician-approval audit log (ephemeral)
@@ -737,9 +755,23 @@ class Handler(BaseHTTPRequestHandler):
                 prop = build_proposal(idx, q.get("lang", "en")) if idx < N_PROPOSALS else None
                 self._api("/api/proposal", {"proposal": prop, "log": log,
                                             "reviewed": idx, "total": N_PROPOSALS}, "illustrative")
+            elif u.path == "/healthz":
+                self._send(200, json.dumps({"status": "ok", "sha": running_sha()}))
             elif u.path in ("/", "/index.html"):
+                with open(os.path.join(HERE, "app", "index.html"), "rb") as f:
+                    self._send(200, f.read(), "text/html; charset=utf-8")
+            elif u.path == "/lab":
                 with open(os.path.join(HERE, "index.html"), "rb") as f:
                     self._send(200, f.read(), "text/html; charset=utf-8")
+            elif u.path.startswith("/app/"):
+                name = os.path.basename(u.path)
+                fp = os.path.join(HERE, "app", name)
+                ctype = APP_CTYPES.get(os.path.splitext(name)[1])
+                if ctype and os.path.isfile(fp):
+                    with open(fp, "rb") as f:
+                        self._send(200, f.read(), ctype)
+                else:
+                    self._send(404, "not found", "text/plain")
             elif u.path.startswith("/vendor/"):
                 name = os.path.basename(u.path)
                 fp = os.path.join(HERE, "vendor", name)
@@ -777,6 +809,19 @@ class Handler(BaseHTTPRequestHandler):
                         continue
                 q = {k: v[0] for k, v in parse_qs(u.query).items()}
                 self._send(200, json.dumps(run_sensors(q, rows=rows or None)))
+            elif u.path == "/api/link/replay":
+                from bso.patient_link import InvalidEvents, replay
+                n = self._content_len()
+                if n > 200_000:
+                    self._send(413, json.dumps({"error": "payload too large"}))
+                    return
+                try:
+                    body = json.loads(self.rfile.read(n).decode("utf-8", "replace")) if n else {}
+                    state = replay(body.get("events"), body.get("now"))
+                except (InvalidEvents, ValueError, AttributeError) as e:
+                    self._send(400, json.dumps({"error": str(e)}))
+                    return
+                self._api("/api/link/replay", state, "illustrative")
             elif u.path == "/api/proposal/decide":
                 import datetime
 
@@ -796,8 +841,11 @@ class Handler(BaseHTTPRequestHandler):
                                                 "proposal": None, "reviewed": idx,
                                                 "total": N_PROPOSALS}))
                     return
+                decision = body.get("decision")
+                if decision not in VALID_DECISIONS:
+                    self._send(400, json.dumps({"ok": False, "error": "explicit decision required"}))
+                    return
                 prop = build_proposal(idx, lang)             # the one the clinician saw
-                decision = body.get("decision", "approve")
                 ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 log_decision(db, ts, prop, decision, note=body.get("note", ""))
                 log = list_decisions(db)
