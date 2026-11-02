@@ -69,3 +69,11 @@ def test_healthz_reports_the_running_commit(monkeypatch):
         httpd.shutdown()
         httpd.server_close()
         thread.join(timeout=5)
+
+
+def test_running_sha_reads_the_revision_file_of_an_uploaded_tree(monkeypatch, tmp_path):
+    monkeypatch.delenv("RAILWAY_GIT_COMMIT_SHA", raising=False)
+    monkeypatch.setattr(server, "REPO_ROOT", str(tmp_path))
+    assert server.running_sha() == ""
+    (tmp_path / "REVISION").write_text("def456\n", encoding="utf-8")
+    assert server.running_sha() == "def456"

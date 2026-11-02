@@ -25,7 +25,7 @@
 1. **Хард-ліміти — константи.** Амплітуда, ширина імпульсу, частота, заряд на фазу, щільність заряду, тепловий проксі, e-stop — задані в `config/limits.py` як константи й **ніколи** не перевищуються в симуляції.
 1. **Числа — фізіологічно правдоподібні ПЛЕЙСХОЛДЕРИ.** Усі межі/параметри позначаються `# ILLUSTRATIVE, not clinically validated`. Ми ніколи не видаємо їх за клінічно підтверджені й не робимо медичних тверджень.
 1. **Реальний моторний контур = класичне/RL-керування, НЕ LLM.** Контури на мілісекундах (оркестратор, ефектори, зворотний зв’язок, safety) — це детермінований код / контролери / опційно RL. LLM-агенти дозволені **лише на супервізорному рівні** (конфіг протоколів, звіти сесій, планування адаптації) і **ніколи** не в реальному часі моторного циклу.
-1. **Жодних реальних пацієнтських даних.** Лише синтетика. Якщо колись з’являться реальні дані — окремий контур із згодою, де-ідентифікацією й комплаєнсом; у цьому репо їх немає.
+1. **No real data of any other person.** Synthetic only, with one exception: the owner's own stimulation programs and his own reports, which he publishes by his own decision (2026-11-02, `PROJECT_CONTROL.md`). Label them as his and keep simulated responses labelled as simulated. Real data of anyone else needs a separate circuit with consent, de-identification and compliance, and stays out of this repository.
 
 -----
 
@@ -287,7 +287,7 @@ brain-spine-orchestrator/
 ## 10. Чого НЕ робити (scope guard)
 
 - НЕ під’єднувати реальне залізо, імпланти, телеметрію, BLE до медпристроїв.
-- НЕ використовувати реальні пацієнтські дані.
+- Do NOT use real data of any person other than the owner (see invariant 7).
 - НЕ робити клінічних/медичних тверджень і не подавати плейсхолдер-числа як валідовані.
 - НЕ ставити LLM у реальний моторний цикл.
 - НЕ дозволяти жодному агенту обходити safety-супервізор.

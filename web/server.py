@@ -36,6 +36,18 @@ REPO_ROOT = os.path.abspath(os.path.join(HERE, ".."))
 SRC_EXT = (".py", ".md", ".sql", ".txt", ".toml", ".cfg", ".json")
 
 
+def running_sha():
+    """Commit being served: Railway's variable on a Git deploy, else the REVISION file of an uploaded tree."""
+    sha = os.environ.get("RAILWAY_GIT_COMMIT_SHA", "")
+    if sha:
+        return sha
+    try:
+        with open(os.path.join(REPO_ROOT, "REVISION"), encoding="utf-8") as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
 def read_source(rel):
     """Serve a source file from inside the repo so any dashboard block can drill
     down to the code behind it. Sandboxed: the resolved path must stay under the
@@ -744,7 +756,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._api("/api/proposal", {"proposal": prop, "log": log,
                                             "reviewed": idx, "total": N_PROPOSALS}, "illustrative")
             elif u.path == "/healthz":
-                self._send(200, json.dumps({"status": "ok", "sha": os.environ.get("RAILWAY_GIT_COMMIT_SHA", "")}))
+                self._send(200, json.dumps({"status": "ok", "sha": running_sha()}))
             elif u.path in ("/", "/index.html"):
                 with open(os.path.join(HERE, "app", "index.html"), "rb") as f:
                     self._send(200, f.read(), "text/html; charset=utf-8")

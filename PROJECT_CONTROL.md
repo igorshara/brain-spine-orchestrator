@@ -9,15 +9,15 @@
 ## Active block
 
 <!-- IHOR_BLOCK_PROGRESS:START v1 -->
-Block: B4-PACKAGE
-- [x] README, `docs/validation.md` and the partner briefs match the current product: no retracted or unsupported claim, figures reproduced from code
-- [x] One-page English summary as a final PDF on Desktop, with a Ukrainian translation
-- [x] 60-second demo script that follows the real screens, checked against them
-- [x] Letters to University of Louisville and Medtronic, with Ukrainian translations, sending nothing
-- [x] Package checked: control figures match the code, PDFs open and read clean, pytest green
+Block: B5-DELIVERY
+- [ ] Owner data rule updated in `CLAUDE.md` and `README.md`, tests green
+- [ ] Clean tree of the target commit starts with only `requirements.txt` installed
+- [ ] Branch merged into `main`, without `backup/pre-labirynt-rewrite` or `QA_FINDINGS.md` changes
+- [ ] Target commit runs at the live URL: `/healthz` returns its SHA
+- [ ] Main demo path passes on the live URL in WebKit by real clicks
 <!-- IHOR_BLOCK_PROGRESS:END -->
 
-Check set: pytest, deterministic reproduction of each quoted figure, PDF render inspected. Codex: no, documents. Nothing is sent or deployed in this block.
+Check set: pytest, clean-tree start, secrets scan, `/healthz` SHA on the live URL, main demo path in WebKit on the live URL. Codex: no, the product code passed review at f752025; only the health route and documents changed since. No letter is sent in this block.
 
 B2-SCREENS and B3-VISUALS closed: Codex GO at f752025 (review bd87b33c5948, owner-authorized round 3), no findings.
 
@@ -35,9 +35,11 @@ B2-SCREENS and B3-VISUALS closed: Codex GO at f752025 (review bd87b33c5948, owne
   - P1 the assistant stated "0 episodes vs 377" (`src/bso/dashboard_agent.py`). Figures now come from the same simulation as the Research charts: 13 with no control, 0 with prediction. "Validated" and "24/7" claims removed from its copy.
   - P2 the Research walking stage now shows a loading text; fixed because the owner asked to finish everything.
 
+- 2026-11-02, delivery and data rule. Owner's words: "я даю окремий дозвіл на зміну конфігурації щодо моїх даних ... викладаю на живу адресу."
+
 ## Next block
 
-Delivery of the new site to the live URL, on the owner's word. Stage 2 auto-tuning stays deferred.
+Stage 2 auto-tuning stays deferred.
 
 ## Latest handoff
 
