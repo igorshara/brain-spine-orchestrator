@@ -10,11 +10,11 @@
 
 <!-- IHOR_BLOCK_PROGRESS:START v1 -->
 Block: B5-DELIVERY
-- [ ] Owner data rule updated in `CLAUDE.md` and `README.md`, tests green
-- [ ] Clean tree of the target commit starts with only `requirements.txt` installed
-- [ ] Branch merged into `main`, without `backup/pre-labirynt-rewrite` or `QA_FINDINGS.md` changes
-- [ ] Target commit runs at the live URL: `/healthz` returns its SHA
-- [ ] Main demo path passes on the live URL in WebKit by real clicks
+- [x] Owner data rule updated in `CLAUDE.md` and `README.md`, tests green
+- [x] Clean tree of the target commit starts with only `requirements.txt` installed
+- [x] Branch merged into `main`, without `backup/pre-labirynt-rewrite` or `QA_FINDINGS.md` changes
+- [x] Target commit runs at the live URL: `/healthz` returns its SHA
+- [x] Main demo path passes on the live URL in WebKit by real clicks
 <!-- IHOR_BLOCK_PROGRESS:END -->
 
 Check set: pytest, clean-tree start, secrets scan, `/healthz` SHA on the live URL, main demo path in WebKit on the live URL. Codex: no, the product code passed review at f752025; only the health route and documents changed since. No letter is sent in this block.
@@ -42,6 +42,8 @@ B2-SCREENS and B3-VISUALS closed: Codex GO at f752025 (review bd87b33c5948, owne
 Stage 2 auto-tuning stays deferred.
 
 ## Latest handoff
+
+2026-11-02: B5-DELIVERY closed. Live at https://brain-spine-orchestrator-production.up.railway.app runs main 3beb2df, confirmed by `/healthz`. The Railway service has no Git source, so a deploy is `railway up` from a clean `git archive` of the target commit with its SHA in a `REVISION` file; `web/server.py` `running_sha` reads it. Clean tree started with only `requirements.txt` installed; secrets scan clean; pytest 243 passed at 14dc2af, web tests after the wording fix. Demo path walked on the live URL in WebKit by real clicks at 1440 px, 0 page errors; phone width 390 px loaded with no sideways scroll and the Research tab opened by click, demo path not repeated there. Owner data rule changed in `CLAUDE.md` and `README.md`. Labirynt runs as its own service and answers 200. This handoff commit is documentation only, so main may sit one commit ahead of the live SHA. No letter sent. Next: stage 2 auto-tuning on the owner's word.
 
 2026-11-02: B4-PACKAGE closed. Added `/healthz` (d437d80, separate commit, not live until deployed). Package in `~/Desktop/BCI/BSO — Пакет 2026-11` (summary, 60-second demo script, letters to University of Louisville and Medtronic, each EN + UA); sources in `~/Desktop/BCI/Код та робочі матеріали/package_2026-11`. Demo path walked in WebKit by real clicks at 1440 px, 0 page errors, test server stopped, port closed; narration 134 words, timing by word count, not rehearsed aloud. pytest 242 passed. June package and the letter with the retracted pilot claim moved to `~/Desktop/BCI/_Архів`. Nothing sent, nothing pushed, nothing deployed: the letters link the live URL, which still serves the old build. Next: owner's word on push, merge and deploy.
 
