@@ -1,5 +1,7 @@
 // Client side of the simulated patient link. The server replays the event log; this
 // file only holds the log and the simulated clock, and never invents a device state.
+import { h, t } from './ui.js';
+
 const TICK_MS = 200;
 const IDLE_SYNC_MS = 1000;
 
@@ -11,6 +13,7 @@ export class Sim {
     this.speed = 1;
     this.state = null;
     this.failed = false;
+    this.rejected = false;
     this.inFlight = false;
     this.dirty = false;
     this.timer = null;
@@ -47,6 +50,7 @@ export class Sim {
     this.speed = speed;
     this.state = null;
     this.failed = false;
+    this.rejected = false;
     this.seq += 1;
     return this.sync();
   }
@@ -84,6 +88,7 @@ export class Sim {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ events: this.events, now: this.now }),
       });
+      if (seq === this.seq) this.rejected = res.status === 400;
       if (!res.ok) throw new Error(`replay answered ${res.status}`);
       const state = await res.json();
       if (seq === this.seq) {
@@ -100,6 +105,23 @@ export class Sim {
       this.sync();
     }
   }
+}
+
+// Shown while the simulator gives no state. A log the server refuses never recovers by
+// asking again, so that case offers a fresh start of the run instead.
+export function pausedNotice(sim, restart) {
+  const say = h('span', {});
+  const again = h('button', { class: 'btn', type: 'button', on: { click: () => (sim.rejected ? restart() : sim.sync()) } });
+  const node = h('p', { class: 'paused', role: 'alert', hidden: true }, say, ' ', again);
+  node.refresh = () => {
+    node.hidden = !sim.failed;
+    say.textContent = sim.rejected
+      ? t('This run has grown too long for the simulator, so no state is shown.', 'Цей прогін став задовгим для симулятора, тому стан не показано.')
+      : t('Simulation paused. The simulator did not answer, so no state is shown.', 'Симуляцію зупинено. Симулятор не відповів, тому стан не показано.');
+    again.textContent = sim.rejected ? t('Start this run again', 'Почати цей прогін спочатку') : t('Try again', 'Спробувати ще раз');
+  };
+  node.refresh();
+  return node;
 }
 
 // A running stimulator with a confirmed status, the usual start of a scenario.

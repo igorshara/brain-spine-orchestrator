@@ -1,6 +1,6 @@
 import { createTrace } from './trace.js';
 import { h, t, clock } from './ui.js';
-import { Sim, SWITCHED_ON } from './link.js';
+import { Sim, SWITCHED_ON, pausedNotice } from './link.js';
 import { Guide } from './guide.js';
 
 const start = (sim, minutes) => sim.push({ type: 'reminder_start', minutes });
@@ -143,9 +143,7 @@ export function mount(root, param) {
     type: 'checkbox', id: 'auto-rem',
     on: { change: () => sim.push({ type: 'settings', auto_reminder_min: auto.checked ? 60 : null }) },
   });
-  const paused = h('p', { class: 'paused', role: 'alert', hidden: true },
-    t('Simulation paused. The simulator did not answer, so no state is shown. ', 'Симуляцію зупинено. Симулятор не відповів, тому стан не показано. '),
-    h('button', { class: 'btn', type: 'button', on: { click: () => sim.sync() } }, t('Try again', 'Спробувати ще раз')));
+  const paused = pausedNotice(sim, () => play(current));
 
   const strip = h('div', { class: 'strip', role: 'group', 'aria-label': t('Scenarios', 'Сценарії') });
   for (const [key, sc] of Object.entries(SCENARIOS)) {
@@ -175,7 +173,7 @@ export function mount(root, param) {
   function update() {
     root.querySelectorAll('[data-scenario]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.scenario === current));
     root.querySelectorAll('[data-speed]').forEach((b) => b.setAttribute('aria-pressed', +b.dataset.speed === sim.speed));
-    paused.hidden = !sim.failed;
+    paused.refresh();
     panel.classList.toggle('is-stale', sim.failed);
     const st = sim.state;
     if (!st) return;

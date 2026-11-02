@@ -1,10 +1,19 @@
 import { h, t } from './ui.js';
 import { createWalker, loadMesh } from './walker.js';
 
+// Measured from tools/blender/system_scene.json, then nudged off the device so the mark does not cover it.
+const PARTS = [
+  { x: 84, y: 41, name: ['Controller', 'Пульт'], say: ['The screen in your hand. It knows only what the implant last told it.', 'Екран у вашій руці. Він знає лише те, що імплант сказав йому востаннє.'] },
+  { x: 50, y: 55, name: ['Communicator', 'Комунікатор'], say: ['Worn on a belt, it carries each command across the radio link.', 'Носиться на поясі й передає кожну команду радіоканалом.'] },
+  { x: 51, y: 67, name: ['Implant', 'Імплант'], say: ['It keeps doing what it last heard, whether or not the screen knows.', 'Робить те, що почув востаннє, незалежно від того, чи знає про це екран.'] },
+  { x: 28.5, y: 47, name: ['Lead', 'Електрод'], say: ['It delivers the pulses at the spinal cord.', 'Подає імпульси до спинного мозку.'] },
+];
+
 const SOURCE = 'https://medicalxpress.com/news/2022-04-home-epidural-people-spinal-cord.html';
 
 export function mount(root) {
-  const stage = h('div', { class: 'stage-canvas', 'data-testid': 'walker' });
+  const stage = h('div', { class: 'stage-canvas', 'data-testid': 'walker' },
+    h('p', { class: 'stage-wait', role: 'status' }, t('Loading the walking model', 'Завантажую модель ходи')));
   const label = h('p', { class: 'stage-label' }, t('Simulated movement, not a treatment result', 'Симульований рух, а не результат лікування'));
   let walker = null;
   let gone = false;
@@ -27,6 +36,15 @@ export function mount(root) {
       h('h2', {}, t('The idea in one picture', 'Ідея однією картинкою')),
       h('p', { class: 'lead' }, t('A controller knows only what the implant has told it. When the link drops, these two can disagree, and the screen should say so.',
         'Пульт знає лише те, що йому сказав імплант. Коли зв’язок зникає, ці двоє можуть розходитись, і екран має про це казати.')),
+      h('div', { class: 'scene' },
+        h('figure', { class: 'scene-fig' },
+          h('div', { class: 'scene-img', 'data-testid': 'scene' },
+            h('img', { src: '/app/system_scene.webp', width: 900, height: 1080, alt: t('A standing figure with a tablet controller in one hand, a communicator on a belt, an implant at the hip and a lead along the spine. Dotted radio paths join controller, communicator and implant.',
+              'Людина стоїть із планшетним пультом у руці, комунікатор на поясі, імплант біля стегна й електрод уздовж хребта. Пунктирні радіошляхи з’єднують пульт, комунікатор та імплант.') }),
+            PARTS.map((p, i) => h('span', { class: 'scene-mark', style: `left:${p.x}%;top:${p.y}%`, 'aria-hidden': 'true' }, i + 1))),
+          h('figcaption', { class: 'small' }, t('Illustration. Generic devices, not to scale.', 'Ілюстрація. Узагальнені пристрої, не в масштабі.'))),
+        h('ol', { class: 'scene-path' }, PARTS.map((p) => h('li', {},
+          h('strong', {}, t(...p.name)), h('span', {}, t(...p.say)))))),
       h('div', { class: 'idea-grid' },
         h('div', { class: 'idea-cell' },
           h('p', { class: 'idea-case' }, t('The command was lost', 'Загубилась команда')),
@@ -58,6 +76,7 @@ export function mount(root) {
 
   loadMesh().then((data) => {
     if (gone) return;
+    stage.replaceChildren();
     walker = createWalker(stage, data, { height: stage.clientHeight || 460 });
   }).catch(() => {
     stage.replaceChildren(h('p', { class: 'stage-error' }, t('The walking model did not load. Reload the page to try again.', 'Модель ходи не завантажилась. Оновіть сторінку.')));

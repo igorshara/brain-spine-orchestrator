@@ -9,17 +9,16 @@
 ## Active block
 
 <!-- IHOR_BLOCK_PROGRESS:START v1 -->
-Block: B2-SCREENS
-- [ ] Primary navigation is four screens: Overview, Controller, Session, Research; all legacy tabs stay reachable from an Archive
-- [ ] Controller shows the owner's real programs and requested / acknowledged / failed / unknown states; connection loss never renders as OFF
-- [ ] Session covers reminder timer, acknowledgement, unanswered and connection-loss scenarios
-- [ ] Forgotten-controller scenario is playable end to end
-- [ ] Assistant closed by default, opens only on request
-- [ ] Walking model from real simulation trajectories with its label
-- [ ] WebKit click-through at 1440 and 390 px and full pytest green
+Block: B3-VISUALS
+- [x] Blender system scene on Overview, labelled as an illustration, with four parts explained in order
+- [x] Every chart carries units, a labelled baseline, sample count, source and a table of the numbers
+- [x] Charts drawn at real pixel width, legible at 390 px; programs table closed by default
+- [x] A refused or overlong run shows no state and offers a restart; the walker stage shows a loading state
+- [x] WebKit click-through at 1440 and 390 px and full pytest green
+- [ ] Phase 4: one Codex review of B2 and B3 together, at most two rounds
 <!-- IHOR_BLOCK_PROGRESS:END -->
 
-Check set: pytest, WebKit on the changed path. Codex: yes, product block, one review with phase 4.
+Check set: pytest, WebKit on the changed path. Codex: yes, product block, one review covering B2 and B3.
 
 ## Owner decisions
 
@@ -30,8 +29,10 @@ Check set: pytest, WebKit on the changed path. Codex: yes, product block, one re
 
 ## Next block
 
-Phase 3 visual rebuild, then phase 4 review.
+Phase 5 partner package, after the phase 4 review closes. Stage 2 auto-tuning stays deferred.
 
 ## Latest handoff
+
+2026-11-02: B2-SCREENS and B3 visuals built. Click-through 114 ok, 0 fails at 1440 and 390 px; pytest 237 passed before the last JS-only change. One earlier run failed on a button detached mid-click with machine load above 11; it did not recur in two later runs, so it is unproven, not fixed. Knee range fixed with joint stops; the Shadow Step claim was retracted because its test failed afterwards (raised-foot toe 12.69 to 11.83 cm); owner must hear this. Next: Codex review.
 
 2026-11-02: B1-TRUTH closed: AD metric counts episodes and converges (none 13, reactive 3, predictive 0 at dt 0.1; reactive delay 5 s is ILLUSTRATIVE), public copy corrected, explicit decision required, 209 tests green, WebKit checked on banner, guard and programs. Stale figures remain in `docs/partner_brief*.md` and `docs/validation.md`; phase 5 rewrites them. Nothing pushed or deployed. `QA_FINDINGS.md` carries a modification from another tool; leave it alone. Branch `claude/new-session-p6xmtv`.

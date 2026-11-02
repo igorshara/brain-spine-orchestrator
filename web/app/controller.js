@@ -1,6 +1,6 @@
 import { createTrace } from './trace.js';
 import { h, t, ago, clock, getJSON, range } from './ui.js';
-import { Sim, SWITCHED_ON } from './link.js';
+import { Sim, SWITCHED_ON, pausedNotice } from './link.js';
 import { Guide } from './guide.js';
 
 const off = (sim) => sim.push({ type: 'cmd', op: 'off' });
@@ -245,9 +245,7 @@ export function mount(root, param) {
   const refusal = h('p', { class: 'refusal', role: 'status' });
   const ledger = h('tbody', {});
   const simClock = h('span', { class: 'clock' });
-  const paused = h('p', { class: 'paused', role: 'alert', hidden: true },
-    t('Simulation paused. The simulator did not answer, so no state is shown. ', 'Симуляцію зупинено. Симулятор не відповів, тому стан не показано. '),
-    h('button', { class: 'btn', type: 'button', on: { click: () => sim.sync() } }, t('Try again', 'Спробувати ще раз')));
+  const paused = pausedNotice(sim, () => play(current));
   const speeds = h('div', { class: 'speeds', role: 'group', 'aria-label': t('Simulation speed', 'Швидкість симуляції') },
     [1, 60, 600].map((v) => h('button', {
       class: 'chip', type: 'button', 'data-speed': v, on: { click: () => { sim.speed = v; update(); } },
@@ -320,7 +318,7 @@ export function mount(root, param) {
   function update() {
     root.querySelectorAll('[data-scenario]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.scenario === current));
     root.querySelectorAll('[data-speed]').forEach((b) => b.setAttribute('aria-pressed', +b.dataset.speed === sim.speed));
-    paused.hidden = !sim.failed;
+    paused.refresh();
     twin.classList.toggle('is-stale', sim.failed);
     timelineSlot.replaceChildren();
     if (current === 'home') timelineSlot.append(homeTimelineNode);

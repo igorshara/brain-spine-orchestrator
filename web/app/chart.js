@@ -1,5 +1,5 @@
 // Line chart in plain SVG: one axis, recessive grid, crosshair with tooltip, direct labels.
-import { h } from './ui.js';
+import { h, t } from './ui.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const s = (tag, attrs) => {
@@ -18,7 +18,7 @@ function ticks(min, max, count) {
   return out;
 }
 
-export function lineChart({ title, unit, xLabel, xUnit = '', series, height = 190, baseline = null, onHover = null, yMin = null }) {
+export function lineChart({ title, unit, xLabel, xUnit = '', series, source, height = 190, baseline = null, onHover = null, yMin = null }) {
   const wrap = h('figure', { class: 'chart' }, h('figcaption', {}, title));
   const box = h('div', { class: 'chart-box' });
   const tip = h('div', { class: 'chart-tip', hidden: true });
@@ -32,8 +32,10 @@ export function lineChart({ title, unit, xLabel, xUnit = '', series, height = 19
   let W = 640;
   const xs = series[0].x;
   const all = series.flatMap((d) => d.y);
-  const lo = yMin !== null ? yMin : Math.min(...all, baseline === null ? Infinity : baseline);
-  const hi = Math.max(...all);
+  wrap.append(h('p', { class: 'chart-note' }, `${source} ${t(`${xs.length} samples per line.`, `${xs.length} точок на лінію.`)}`));
+  wrap.append(numbers({ title, unit, xLabel, xs, series }));
+  const lo = yMin !== null ? yMin : Math.min(...all, baseline?.value ?? Infinity);
+  const hi = Math.max(...all, baseline?.value ?? -Infinity);
   const pad = (hi - lo) * 0.08 || 1;
   const y0 = yMin !== null ? yMin : lo - pad;
   const y1 = hi + pad;
@@ -69,7 +71,10 @@ export function lineChart({ title, unit, xLabel, xUnit = '', series, height = 19
     yAxis.textContent = unit;
     svg.append(yAxis);
     if (baseline !== null) {
-      svg.append(s('line', { x1: m.l, x2: W - m.r, y1: Y(baseline.value ?? baseline), y2: Y(baseline.value ?? baseline), class: 'baseline' }));
+      svg.append(s('line', { x1: m.l, x2: W - m.r, y1: Y(baseline.value), y2: Y(baseline.value), class: 'baseline' }));
+      const label = s('text', { x: W - m.r - 4, y: Y(baseline.value) - 5, 'text-anchor': 'end', class: 'tick' });
+      label.textContent = baseline.label;
+      svg.append(label);
     }
     for (const d of series) {
       const path = d.y.map((v, i) => `${i ? 'L' : 'M'}${X(d.x[i]).toFixed(1)} ${Y(v).toFixed(1)}`).join('');
@@ -131,6 +136,23 @@ export function lineChart({ title, unit, xLabel, xUnit = '', series, height = 19
 
   wrap.mark = (i) => show(i, false);
   return wrap;
+}
+
+// The same numbers as the lines, built on first open because most readers never ask for them.
+const MAX_ROWS = 30;
+function numbers({ title, unit, xLabel, xs, series }) {
+  const more = h('details', { class: 'more' }, h('summary', {}, t('Show the numbers', 'Показати числа')));
+  more.addEventListener('toggle', () => {
+    if (!more.open || more.querySelector('table')) return;
+    const step = Math.max(1, Math.ceil(xs.length / MAX_ROWS));
+    const rows = [];
+    for (let i = 0; i < xs.length; i += step) rows.push([xs[i], ...series.map((d) => d.y[i])]);
+    const caption = step > 1
+      ? t(`${title}, ${unit}. Every ${step}th sample.`, `${title}, ${unit}. Кожна ${step}-та точка.`)
+      : `${title}, ${unit}`;
+    more.append(h('div', { class: 'table-wrap' }, dataTable(caption, [xLabel, ...series.map((d) => d.name)], rows)));
+  });
+  return more;
 }
 
 export function dataTable(caption, headers, rows) {

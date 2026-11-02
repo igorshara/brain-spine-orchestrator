@@ -32,6 +32,11 @@ def test_guardian_adapts_to_fill_rate():
     assert fast["ad_episodes"] == 0 and slow["ad_episodes"] == 0
 
 
+def test_metrics_report_the_baseline_the_chart_draws():
+    _, metrics = simulate("none")
+    assert metrics["baseline_bp"] == 110.0
+
+
 def test_episode_metrics_converge_across_time_steps():
     for policy in ("none", "reactive", "predictive"):
         runs = [simulate(policy, dt=dt)[1] for dt in (0.25, 0.1, 0.05)]
