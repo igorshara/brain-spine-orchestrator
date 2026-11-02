@@ -1,11 +1,9 @@
-"""Shadow Step, validated on the OpenSim model — real anatomy, real muscles.
+"""Shadow Step on the OpenSim model: an honest check of the mechanism.
 
-Найчесніша перевірка винаходу: беремо активації, що їх породжує замкнутий контур
-на Hill-двійнику (reactive vs predictive), і проганяємо їх через ВАЛІДОВАНУ
-м'язово-скелетну модель OpenSim (gait10dof18musc, 18 м'язів Хілла, реальна кістка),
-де рух — це forward dynamics від сил м'язів. Міряємо кліренс носка на справжній
-анатомії. Якщо тіньовий крок піднімає стопу вище й тут — механізм тримається не
-лише на спрощеному двійнику.
+Activations from the closed loop on the Hill twin (reactive vs predictive) drive
+gait10dof18musc (18 Hill muscles) in forward dynamics with joint stops and no ground
+contact. Result as of 2026-11-02: no clearance gain. The earlier 4.56 -> 4.82 cm came
+from a run without joint stops, where the knee bent 40 degrees backwards.
 
 Запуск:  python3 scenarios/predictive_opensim.py   (потрібен OpenSim 4.x)
 Усе ILLUSTRATIVE — дослідницька симуляція, не клінічні числа.
@@ -43,31 +41,31 @@ def _opensim_metrics(mode: str) -> dict:
     toes = [min(f["l"][-1][1], f["r"][-1][1]) for f in res["figures"]]
     mean_clear = sum(toes) / len(toes)
     low = sum(1 for y in toes if y < LOW_CLEAR_M)
+    raised = [max(f["l"][-1][1], f["r"][-1][1]) for f in res["figures"]]
     return {"mean_clear_cm": round(100.0 * mean_clear, 2),
+            "mean_raised_toe_cm": round(100.0 * sum(raised) / len(raised), 2),
             "low_clear_frames": low, "frames": len(toes)}
 
 
 def main():
-    print(f"Shadow Step on the VALIDATED OpenSim model (18 Hill muscles). "
+    print(f"Shadow Step on the OpenSim model (18 Hill muscles). "
           f"Window {T_START:.0f}-{T_START+DURATION:.0f}s. ILLUSTRATIVE.\n")
-    print(f"{'arm':<14}{'mean_clear_cm':>16}{'low_clear_frames':>20}")
-    print("-" * 52)
+    print(f"{'arm':<14}{'mean_clear_cm':>16}{'raised_toe_cm':>16}{'low_clear_frames':>20}")
+    print("-" * 66)
     res = {}
     for mode in ("reactive", "predictive"):
         m = _opensim_metrics(mode)
         res[mode] = m
-        print(f"{mode:<14}{m['mean_clear_cm']:>16}{m['low_clear_frames']:>20}")
-    print("-" * 52)
+        print(f"{mode:<14}{m['mean_clear_cm']:>16}{m['mean_raised_toe_cm']:>16}{m['low_clear_frames']:>20}")
+    print("-" * 66)
     r, p = res["reactive"], res["predictive"]
-    d = round(p["mean_clear_cm"] - r["mean_clear_cm"], 2)
-    print(f"\npredictive vs reactive on real anatomy: mean toe clearance "
-          f"{r['mean_clear_cm']}→{p['mean_clear_cm']} cm ({d:+} cm), "
-          f"low-clearance frames {r['low_clear_frames']}→{p['low_clear_frames']}.")
-    if p["mean_clear_cm"] >= r["mean_clear_cm"]:
-        print("→ The shadow step lifts the foot higher on the validated model too. "
-              "The mechanism holds beyond the simplified twin.")
+    d = round(p["mean_raised_toe_cm"] - r["mean_raised_toe_cm"], 2)
+    print(f"\nraised-foot toe height, reactive to predictive: "
+          f"{r['mean_raised_toe_cm']} -> {p['mean_raised_toe_cm']} cm ({d:+} cm).")
+    if d > 0:
+        print("The shadow step lifts the foot higher on this model.")
     else:
-        print("→ No gain on the validated model — honest negative; revisit.")
+        print("No gain on this model. The gain appears only on the simplified twin.")
 
 
 if __name__ == "__main__":

@@ -169,6 +169,7 @@
 </style>
 </head>
 <body>
+<a href="/" style="display:inline-block;margin:10px 0 0 16px;color:var(--acc);font-size:14px" data-en="Back to the demonstrator" data-ua="Назад до демонстратора">Back to the demonstrator</a>
 <header style="display:flex;justify-content:space-between;align-items:flex-start">
   <div style="display:flex;gap:13px;align-items:center">
     <svg width="42" height="42" viewBox="0 0 48 48" fill="none" aria-label="BSO logo">
@@ -564,9 +565,9 @@ table.ud td:nth-child(2){color:var(--mut);font-family:ui-monospace,monospace}
     <p style="color:var(--mut);font-size:11px;margin-top:10px"
        data-en="Two twins: an instant body (no delay → nothing to anticipate) and a Hill-muscle body whose own activation dynamics create a physiological delay — the one the shadow step is built to beat. All numbers ILLUSTRATIVE. Code: src/bso/feedback.py · scenarios/predictive_step.py."
        data-ua="Два двійники: миттєве тіло (нема затримки → нема чого випереджати) і Hill-мʼязове тіло, чия власна активаційна динаміка створює фізіологічну затримку — саме її обходить тіньовий крок. Усі числа ІЛЮСТРАТИВНІ.">Two twins: instant vs Hill-muscle. ILLUSTRATIVE.</p>
-    <div style="margin-top:8px;padding:8px 11px;border:1px solid rgba(52,211,153,.35);background:rgba(52,211,153,.06);border-radius:9px;font-size:11.5px;color:var(--mut)"
-         data-en="Validated on the OpenSim model (18 Hill muscles, real bone): the same shadow-step activations lift the foot higher on real anatomy too — mean toe clearance 4.56 → 4.82 cm. The mechanism holds beyond the simplified twin."
-         data-ua="Перевірено на моделі OpenSim (18 мʼязів Хілла, справжня кістка): ті самі активації тіньового кроку піднімають стопу вище й на реальній анатомії — середній кліренс носка 4.56 → 4.82 см. Механізм тримається не лише на спрощеному двійнику.">Validated on the OpenSim model.</div>
+    <div style="margin-top:8px;padding:8px 11px;border:1px solid rgba(201,120,10,.45);background:rgba(201,120,10,.08);border-radius:9px;font-size:11.5px;color:var(--mut)"
+         data-en="Not confirmed on the OpenSim model (18 Hill muscles, joint stops, no ground contact): the shadow step showed no clearance gain there. Mean toe height of the raised foot was 12.69 cm reactive and 11.83 cm shadow step. The gain appears only on the simplified twin. ILLUSTRATIVE."
+         data-ua="На моделі OpenSim (18 мʼязів Хілла, обмеження суглобів, без контакту з опорою) не підтверджено: тіньовий крок не дав приросту кліренсу. Середня висота носка піднятої стопи: 12.69 см реактивний, 11.83 см тіньовий крок. Приріст видно лише на спрощеному двійнику. ІЛЮСТРАТИВНО.">Not confirmed on the OpenSim model.</div>
     <div style="margin-top:6px;font-size:11px;color:var(--mut)"><span data-en="Source:" data-ua="Джерело:">Source:</span>
       <span class="srclink" data-src="src/bso/feedback.py">feedback.py</span> ·
       <span class="srclink" data-src="src/bso/runtime.py">runtime.py</span> ·
@@ -977,7 +978,7 @@ table.ud td:nth-child(2){color:var(--mut);font-family:ui-monospace,monospace}
 </div>
 
 <!-- AI ASSISTANT DOCK (always available) -->
-<div id="asst">
+<div id="asst" class="collapsed">
   <div id="asstHead"><span class="ic" data-ic="assistant"></span> AI assistant (live) <span style="color:var(--mut);font-size:12px">▾</span></div>
   <div id="asstBody">
     <div id="asstMsgs"></div>
@@ -2578,7 +2579,10 @@ window.addEventListener('load', ()=>{
   } else if(location.hash==='#spine3d'){
     document.querySelector('.tab[data-tab=plate]').click();
     loadPlate().then(()=>{ $('#runPlan').click(); setTimeout(()=>$('#view3d').click(),200); });
-  } else { $('#runOsimMesh').click(); }  // default: REAL skeleton mesh, never the cylinder sticks
+  } else {
+    const legacy=location.hash.length>1 && document.querySelector('.tab[data-tab="'+CSS.escape(location.hash.slice(1))+'"]');
+    if(legacy) legacy.click(); else $('#runOsimMesh').click();  // default: REAL skeleton mesh, never the cylinder sticks
+  }
 });
 // auto-load the program map the first time its tab is opened
 document.querySelector('.tab[data-tab=programs]').addEventListener('click', ()=>{
