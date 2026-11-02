@@ -1,5 +1,7 @@
 # BSO Lab — six inventions for walking recovery
 
+> Correction, 2026-11-02: a dated snapshot. The OpenSim claim for Shadow step is retracted: re-running it gave no gain (raised-foot toe 12.69 to 11.83 cm). Current figures are in `validation.md`.
+
 **Brain-Spine Orchestrator** · Igor Sharanda · 2026-06-29
 *Research simulator (digital twin). Not a medical device. All numbers ILLUSTRATIVE.*
 
@@ -19,7 +21,7 @@ This makes us a **lab**, not dreamers: idea → test → truth, in minutes, with
 
 **Idea.** Don't react to foot-drop after a sensor sees it (always late, due to the muscle's electromechanical delay) — read the gait phase clock and lift the foot **ahead of time**, easing the unneeded late tail.
 
-**Result.** On the physiological Hill-muscle twin: drag 23.6%→22.2% with **less** stimulation (1056→984). Confirmed on the **validated OpenSim model** (18 muscles): mean toe clearance 4.56→4.82 cm.
+**Result.** On the physiological Hill-muscle twin: drag 23.6%→22.2% with **less** stimulation (1056→984). **On OpenSim there was no gain:** raised-foot toe 12.69→11.83 cm; the earlier claim is retracted.
 
 **Honestly.** With no delay there is nothing to anticipate (a tie) — the win is conditional on the delay. Numbers illustrative.
 
@@ -91,7 +93,7 @@ This makes us a **lab**, not dreamers: idea → test → truth, in minutes, with
 
 | # | Invention | Proved | On |
 |---|---|---|---|
-| 1 | Shadow step | less drag for less current | Hill + OpenSim |
+| 1 | Shadow step | less drag for less current; no gain on OpenSim | Hill twin only |
 | 2 | Use-driven assist | full assist = ~32x less recovery | plasticity |
 | 3 | Hand pacer | arms carry cadence through a bad decoder | closed loop |
 | 4 | Dual lock | −25% charge, 0 spillover | recruitment |

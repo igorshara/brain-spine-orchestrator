@@ -1,126 +1,103 @@
-# Brain-Spine Orchestrator (BSO) — Partner Brief
+# Brain-Spine Orchestrator (BSO): partner brief
 
-> **Research simulation / digital twin of an adaptive orchestration layer for the
-> stimulation side of a brain-spine interface (BSI).** This is **not** a medical
-> device and contains no real-hardware, implant, or patient-data code. All numeric
-> values are **ILLUSTRATIVE**, not clinically validated.
+> **A research simulator. It is not a medical device, not firmware and not a therapy.** It has
+> no connection to any real stimulator, implant or telemetry. Every simulated number is
+> ILLUSTRATIVE and not clinically validated. The stimulation programs shown are the author's
+> own, published by him. They cover no other person.
 >
-> Concept & author: Ihor Sharanda (1TMO / Unbroken, Ukraine). Built as a working
-> proof-of-concept and collaboration instrument — not a finished product.
+> Author: Ihor Sharanda, who lives with a spinal cord injury and a Medtronic implanted
+> stimulator.
 
-*(Цей бриф — англійською, бо адресований міжнародним партнерам. Українська версія —
-на запит.)*
+## 1. The problem, from one user
 
----
+Two failures of ordinary daily use, in the author's own report:
 
-## 1. Position in one paragraph
+- He forgot his remote and waited five to six days for it.
+- He forgot to switch the stimulator off. It ran for a long time, and he then had strong
+  spasms. The link between the long run and the spasms is his own report and has not been
+  measured.
 
-Walking after spinal cord injury via a brain-spine interface has been demonstrated
-(a landmark peer-reviewed study, *Nature* 2023; leading clinical research centers; a partner platform ARC). The open frontier
-is **not** "can a person be made to step" — it is **adaptive orchestration**: holding
-gait quality in real time against fatigue, parameter drift, balance perturbation and
-noisy feedback; coordinating dozens of muscle groups; and doing all of it *inside a
-hard safety envelope*. BSO is that orchestration layer. It is designed to sit **on top
-of** a real stimulation platform (e.g. the partner platform), not to duplicate it.
+Neither failure is about therapy. Both are about the patient-side controller.
 
-Crucially, the same substrate addresses **autonomic function** — bladder, bowel and
-sexual function — which people with SCI rank *as highly as, or above, walking*.
+## 2. What the demonstrator shows
 
-## 2. Architecture (deterministic, safety-first)
+Four screens, all simulated:
+
+| Screen | What a viewer does | What it shows |
+|---|---|---|
+| Overview | Reads the two cases, chooses one to play | The problem and the concept in one view |
+| Controller | Plays lost reply, lost command, refusal and forgotten remote | The controller and the implant can disagree. Connection loss is shown as Unknown, never as Off. A pre-authorized backup can only switch off |
+| Session | Starts a reminder, ignores it, loses the connection | A reminder asks, asks again, then tells a trusted person. It measures time since the reminder started, not stimulation time |
+| Research | Inspects the simulator's charts and walking model | The evidence and its limits, including negative results |
+
+Everything is a concept for discussion. None of it is a feature of any existing system, and
+none of it asks for access to one.
+
+## 3. Under the demonstrator
 
 ```
-Decoder(0) → CPG Orchestrator(1) → Effectors(2) → [Safety Supervisor(5): veto]
+Decoder(0) → CPG orchestrator(1) → Effectors(2) → [Safety supervisor(5): veto]
    ↑                                                         ↓
-Feedback(3) ← sensor corruption ← Body (kinematic OR MuJoCo physics) ← spinal cord
-   ↑                                                  (recruitment + fatigue + coupling)
-Adaptation(4): integral OR learned policy        + Autonomic layer (bladder/bowel/erectile)
+Feedback(3) ← sensor corruption ← Body (kinematic, MuJoCo or OpenSim) ← spinal cord model
+   ↑
+Adaptation(4)                                  + autonomic layer (bladder, bowel, erectile)
 ```
 
-- **Safety supervisor** has absolute veto over every stimulation command (hard limits,
-  charge/charge-density, thermal proxy, **autonomic-dysreflexia watchdog**, e-stop). No
-  agent can bypass it. No LLM is ever in the real-time motor loop.
-- Gait is modelled **phase-wise (CPG)**, physiologically faithful, not a naive
-  muscle→voltage map.
-- Body backend is swappable behind one interface: a fast kinematic model **or** a
-  dynamic **MuJoCo** planar biped with body-weight support.
-- **One substrate for locomotion and autonomic function:** the autonomic loop
-  (bladder/bowel/erectile) runs on the *same* bus, tick-loop and **SafetySupervisor**
-  — autonomic stimulation passes through the same safety veto, and the supervisor's
-  autonomic-dysreflexia watchdog is driven by real organ state (trips on dyssynergic
-  high pressure, silent under coordinated voiding).
+- A deterministic safety supervisor checks every stimulating command. Switch-off delivers no
+  stimulation, so it is never vetoed.
+- No language model runs in the motor loop.
+- The body is swappable: kinematic, planar MuJoCo, or the published OpenSim
+  `gait10dof18musc` model. Validation of that model belongs to its authors, not to BSO.
 
-## 3. What is demonstrated (measured in-sim; ILLUSTRATIVE)
+## 4. Measured in simulation
+
+Every value was reproduced on 2026-11-02. Sources and references are in `validation.md`.
 
 | Capability | Result |
 |---|---|
-| Closed-loop walking (kinematic) | cadence ~76 steps/min, L/R stance antiphase, balance 100% |
-| Walking on **dynamic MuJoCo physics** | upright (pelvis 0.90 m, trunk <6°), GRF ≈ body weight, stance alternation −0.96, **0 safety violations** |
-| Resilience to fatigue+drift (adaptation) | foot-clearance retention: nominal 100% → degraded 30% → **degraded+adapt 61%** (kinematic); **77% → 98%** on physics |
-| Robustness to noisy/dropping sensors | retention **~100%** with adaptation + sensor noise on physics |
-| Active balance recovery (physics) | trunk push: **14.8° peak with active loop vs 41.3° passive-only** |
-| **Autonomic — bladder** | dyssynergia: 94 cmH₂O, 184 mL residual, **autonomic dysreflexia +51 mmHg** → coordinated EES: **54 cmH₂O, 0 mL residual, no AD** |
-| Autonomic — bowel / erectile | coordination restores complete evacuation / functional tumescence |
-| Validated OpenSim model | our gait drives `gait10dof18musc` (18 Hill muscles) → physiologically-plausible muscle-tendon excursions on real anatomy |
-| **Muscle-driven forward dynamics** | legs move under the 18 Hill muscles from our excitations → alternating gait (L/R hip corr ≈ −0.7), body-weight supported — not prescribed kinematics |
-| Autonomous mapping (GP-BO) | recognized method (Bonizzato 2023), validated on benchmark (≈100% vs ≈22% random); sample-efficient, safe-from-query-1 |
-| Safety coverage | 16 exhaustive safety tests; 84 tests total, all green |
+| Walking, kinematic body | 76 steps/min, balance 1.00, 0 safety events |
+| Walking, MuJoCo body | pelvis 0.89 m, trunk lean 6.8° (95th percentile), peak force 496 N at ~490 N body weight, stance alternation −0.97, 0 safety events |
+| Trunk push | 15.0° peak with active balance, 41.3° passive |
+| Foot clearance under degradation, kinematic | 100% nominal, 27% degraded, 92% with adaptation |
+| Foot clearance under fatigue, MuJoCo | 99% nominal, 69% fatigue, 98% with adaptation, 98% with noise added |
+| Bladder model | dyssynergia 94 cmH₂O, 184 mL residual, +41 mmHg; coordinated 54 cmH₂O, 0 mL, +0 mmHg |
+| Dysreflexia episodes, 10 minutes | 13 with no control, 3 reactive (5 s delay, ILLUSTRATIVE), 0 predictive |
+| Tests | 241 passing, 16 of them in the safety suite |
 
-## 4. Honest mock-vs-real map
+## 5. What did not work
 
-| Component | In BSO (mock) | Needed from a partner |
+- **Predictive stimulation brought no gain on the OpenSim body.** Raised-foot toe height fell
+  from 12.69 to 11.83 cm. An earlier claim of improvement is retracted. A small gain remains on
+  the simpler Hill twin only (drag 23.6% to 22.2%).
+- **Bayesian search showed no sample-efficiency advantage on the synthetic stimulation space.**
+  At 20 queries it found 31% against 40% for random search. It remains a method to test on real
+  mapping data.
+- **Auto-mapping recovers its own assumption.** It proves the code, not a clinical mapping.
+- **A learned policy did not robustly beat a simple integral controller.**
+- **The organ models are reduced models.** The contrast they show is partly built into them.
+
+## 6. Mock versus real
+
+| Component | In BSO | What real use would require |
 |---|---|---|
-| Intent decoder | scripted / stub | cortical decoder (ECoG, e.g. a cortical decoder) |
-| EES biophysics | recruitment curve + current-spread coupling | real recruitment data, spinal-circuit models |
-| Stimulator | software model | stimulation platform (the partner platform) |
-| Body | kinematic / Hill muscles / MuJoCo / **validated OpenSim gait10dof18musc (18 muscles)** | clinical validation; full muscle-driven FD; Rajagopal full-body model |
-| Autonomic circuits | reduced physiological models | sacral/lumbar circuit data, urodynamics |
-| Regulatory | — | IDE / CE / MDR pathway |
-
-## 5. Honest findings — what works and what doesn't
-
-We report negatives as plainly as positives.
-
-- **Adaptation works and is robust.** A slow Layer-4 controller compensates fatigue/drift
-  and tolerates sensor noise, on both kinematic and physics bodies, within the safety
-  envelope. An honest trade-off is visible: compensation accelerates fatigue.
-- **Learning does *not* universally beat a hand-tuned integral controller.** We built a
-  trainable Layer-4 (CEM-optimised policy) and found the simple integral controller is a
-  strong, near-optimal baseline for single-objective compensation. The learned policy
-  shows an edge **only** in a narrow channel-coupling-dominated, fatigue-free regime, and
-  transfers worse to physics. This is a useful result: it tells us *where* learning is and
-  is not justified, and the harness is ready for the richer settings where it should pay
-  off (high-dimensional channel coordination, partial observability, clinical multi-cost).
-- **Active balance** clearly outperforms passive support under perturbation.
-- **Autonomic coordination** produces the clinically meaningful contrast (low-pressure,
-  complete bladder emptying; prevention of autonomic dysreflexia).
-
-## 6. Ukraine's unique contribution
-
-- A large SCI cohort — including a substantial **military** population — is a world-class
-  dataset for training and validating an adaptive layer. This is what a research center/a partner platform do *not*
-  have, and what their approach needs to scale.
-- The concept author is **both a patient and the architect** — a rare point of trust and
-  insight for a collaboration.
+| Patient controller | software model of commands and answers | the manufacturer's device, process and regulatory path |
+| Intent decoder | scripted | a real decoder |
+| Stimulation biophysics | recruitment curve and current-spread model | real recruitment data |
+| Stimulator | software model | a real platform, under its maker's control |
+| Body | reduced and published models | clinical validation |
+| Autonomic circuits | reduced models | urodynamics and circuit data |
 
 ## 7. The ask
 
-A joint pilot: **our adaptive orchestration layer + your stimulation platform + the
-Ukrainian cohort.** Concrete first technical steps already scoped: MuJoCo PD-tracking is in
-place; next are an OpenSim musculoskeletal backend, multi-channel coordinated control, and
-training the adaptive layer on synthetic → consented real data.
+A 30-minute conversation about the lived experience of a patient-side controller, and an
+experience review of this nonconnected demo. The author asks for no device access, no
+protocol information and no reverse engineering, and claims no clinical result or pilot.
 
----
+## 8. Run it
 
-*Deeper reading:* **`scientific_basis.md`** maps every design decision to the primary
-literature (Capogrosso 2016, a published trial (2018), Rowald 2022, a landmark study (2023), Squair 2021,
-Moraud 2016, published spinal-stimulation studies bladder scES, the <40 cmH₂O upper-tract criterion, AD definition — verified
-DOIs/PMIDs). **`validation.md`** checks that the simulation's emergent numbers land in
-physiological ranges (cadence, GRF ≈ body weight, safe bladder pressure <40 cmH₂O,
-AD ≥20 mmHg).
+```
+python3 web/server.py
+```
 
-*Reproduce every figure in this brief:* `python3 scenarios/generate_all.py` (writes to
-`outputs/`). **Live interactive demo** (zero dependencies, runs offline):
-`python3 web/server.py` → `http://localhost:8765` — crank fatigue / coupling / adaptation /
-body model and watch the walking figure, ground reaction force and bladder pressure /
-autonomic-dysreflexia risk respond in real time. Safety invariants and the full canon:
-see `CLAUDE.md`.
+Then open `http://localhost:8765`. `scientific_basis.md` maps design decisions to the
+literature. `validation.md` compares each number with its reference range.

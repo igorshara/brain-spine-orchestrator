@@ -1,5 +1,7 @@
 # BSO — Program Reference Sheet
 
+> Correction, 2026-11-02: a dated snapshot. The OpenSim claim for Shadow step is retracted: re-running it gave no gain (raised-foot toe 12.69 to 11.83 cm). Current figures are in `validation.md`.
+
 **Brain-Spine Orchestrator (BSO)** — a brain ↔ spinal-cord orchestrator
 **For:** Igor Sharanda · **Date:** 2026-06-29 · **Type:** working simulator (digital twin), not slides
 
@@ -53,7 +55,7 @@ A "conductor" program that sits **between a movement-intent decoder in the brain
 
 ### 7. Digital twin of the body (biomechanics)
 **Purpose:** safely test everything on a virtual body before touching the real one.
-**What it does:** simulates the lower limbs on real physics — from simple kinematics to full dynamics (MuJoCo) and a scientifically validated musculoskeletal model (OpenSim).
+**What it does:** simulates the lower limbs on real physics — from simple kinematics to full dynamics (MuJoCo) and a published musculoskeletal model (OpenSim), validated by its authors and not by BSO.
 **How it helps:** thousands of experiments with zero risk to you — this is where we "invent" and validate ideas.
 *Modules: biomech (base / kinematic / mujoco / opensim), neurostim_gym (an open benchmark arena for reproducible testing).*
 
@@ -97,7 +99,7 @@ If someone asks "is this just pictures?" — here is the honest answer in five p
 
 2. **The heart is a real-time closed loop.** On every "tick" the signal runs around the loop: intent → gait conductor → effectors → **safety check** → digital body → sensors → back for correction. This is control-systems engineering architecture — the same logic used in robotics and avionics.
 
-3. **The body runs on real physics.** Motion is tested not with "animation" but on industrial scientific engines: **MuJoCo** (dynamics) and **OpenSim** (a scientist-validated musculoskeletal model) + a Hill muscle model. These are the tools biomechanics labs worldwide use.
+3. **The body runs on real physics.** Motion is tested not with "animation" but on industrial scientific engines: **MuJoCo** (dynamics) and **OpenSim** (a published musculoskeletal model, validated by its authors) + a Hill muscle model. These are the tools biomechanics labs worldwide use.
 
 4. **There is machine learning inside — but in the right place.** Bayesian optimization auto-tunes stimulation parameters, an evolution method trains gait across speeds, meta-learning transfers experience between patients. Yet **no LLM sits in the motor loop** — the "language model" works only at the level of reports and recommendations, never controlling stimulation directly. Real movement is deterministic code and controllers.
 
