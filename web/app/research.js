@@ -191,11 +191,12 @@ export function mount(root) {
     }));
     const sync = (i) => panels.forEach((c) => c.mark(i));
     const source = t('Source: synthetic model, no patient data.', 'Джерело: синтетична модель, без даних пацієнтів.');
-    const base = data.none.metrics.baseline_bp;
+    const m = data.none.metrics;
+    const base = m.baseline_bp;
     panels.push(
       lineChart({ title: t('Blood pressure', 'Артеріальний тиск'), unit: 'mmHg', xLabel: t('Time, s', 'Час, с'), xUnit: ' s', series: seriesFor('bp'), source, baseline: { value: base, label: t(`Baseline, ${base} mmHg`, `Вихідний рівень, ${base} мм рт. ст.`) }, onHover: sync }),
-      lineChart({ title: t('Bladder pressure', 'Тиск у міхурі'), unit: 'cmH2O', xLabel: t('Time, s', 'Час, с'), xUnit: ' s', series: seriesFor('pressure'), source, onHover: sync }),
-      lineChart({ title: t('Bladder volume', 'Об’єм міхура'), unit: 'mL', xLabel: t('Time, s', 'Час, с'), xUnit: ' s', series: seriesFor('volume'), source, onHover: sync }),
+      lineChart({ title: t('Bladder pressure', 'Тиск у міхурі'), unit: 'cmH2O', xLabel: t('Time, s', 'Час, с'), xUnit: ' s', series: seriesFor('pressure'), source, baseline: { value: m.ad_trigger_pressure, label: t(`Dysreflexia trigger, ${m.ad_trigger_pressure} cmH2O`, `Поріг дисрефлексії, ${m.ad_trigger_pressure} cmH2O`) }, onHover: sync }),
+      lineChart({ title: t('Bladder volume', 'Об’єм міхура'), unit: 'mL', xLabel: t('Time, s', 'Час, с'), xUnit: ' s', series: seriesFor('volume'), source, baseline: { value: m.start_volume, label: t(`Starting volume, ${m.start_volume} mL`, `Початковий об’єм, ${m.start_volume} мл`) }, onHover: sync }),
     );
     const rows = POLICY.map((p) => {
       const m = data[p.key].metrics;

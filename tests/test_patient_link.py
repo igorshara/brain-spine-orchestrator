@@ -156,6 +156,19 @@ def test_left_behind_alert_then_backup_restores_control_but_not_amplitude():
     assert state["controller"]["state"] == "off"
 
 
+def test_backup_can_only_switch_off():
+    paired = ON + [{"t": 5, "type": "leave_home"}, {"t": 100, "type": "backup_pair"}]
+    ready = 100 + PAIR_S + SYNC_S + 1
+    off = paired + [cmd(ready, "off")]
+    state = replay(off + [cmd(ready + 3, "on")], ready + 6)
+    assert state["commands"][-1]["reason"] == "backup_limited"
+    assert state["controller"]["state"] == "off" and state["implant_model"]["on"] is False
+
+    state = replay(paired + [cmd(ready, "program", program=program_id(1))], ready + 3)
+    assert state["commands"][-1]["reason"] == "backup_limited"
+    assert state["implant_model"]["program"] == replay(paired, ready + 3)["implant_model"]["program"]
+
+
 def start(t=2, minutes=60):
     return {"t": t, "type": "reminder_start", "minutes": minutes}
 

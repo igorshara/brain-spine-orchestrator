@@ -32,6 +32,12 @@ def test_guardian_adapts_to_fill_rate():
     assert fast["ad_episodes"] == 0 and slow["ad_episodes"] == 0
 
 
+def test_metrics_report_the_bladder_references_the_charts_draw():
+    _, m = simulate("none")
+    assert m["ad_trigger_pressure"] == 60.0
+    assert m["start_volume"] > 0
+
+
 def test_metrics_report_the_baseline_the_chart_draws():
     _, metrics = simulate("none")
     assert metrics["baseline_bp"] == 110.0

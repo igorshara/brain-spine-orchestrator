@@ -27,11 +27,15 @@ Check set: pytest, WebKit on the changed path. Codex: yes, product block, one re
 
 - 2026-11-02, focus: "не потрібно мені ускладнювати життя ... йти, когось питати ... зробити крутою, з крутим інтерфейсом, з крутим функціоналом, і щоб цьому вразило Луївський ... університет". Build the program first. Outreach, clinic and legal questions do not block the build and are not raised again until the product is ready.
 
+- 2026-11-02, OPEN P0 from Codex round 1: `labirynt/` (a separate private app) sat in this public repository with its active PIN in the README and a gate bypass. Removed from the tree and copied to `~/claude-projects/labirynt`. Still open and needing the owner: the commits on `origin/claude/new-session-p6xmtv` still hold the PIN, and the live PIN is not rotated. Nothing pushed. Round 2 waits for this decision.
+
 ## Next block
 
 Phase 5 partner package, after the phase 4 review closes. Stage 2 auto-tuning stays deferred.
 
 ## Latest handoff
+
+2026-11-02: Codex round 1 NO-GO on 3272e14. Corrective committed: backup controller refuses everything except off (P1), bladder charts carry labelled references (P1), labirynt removed from the tree (P0, partial). pytest 239 passed; click-through 114 ok; backup path 12 ok by real clicks. Round 2 not requested yet: see the open P0.
 
 2026-11-02: B2-SCREENS and B3 visuals built. Click-through 114 ok, 0 fails at 1440 and 390 px; pytest 237 passed before the last JS-only change. One earlier run failed on a button detached mid-click with machine load above 11; it did not recur in two later runs, so it is unproven, not fixed. Knee range fixed with joint stops; the Shadow Step claim was retracted because its test failed afterwards (raised-foot toe 12.69 to 11.83 cm); owner must hear this. Next: Codex review.
 

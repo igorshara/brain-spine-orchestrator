@@ -205,6 +205,8 @@ class _Sim:
             return "no_controller"
         if cmd.op == "off":
             return None                 # always allowed, even when the state is unknown
+        if self.backup_state == "active" and not self.primary_present:
+            return "backup_limited"     # the backup can only switch off
         if self.belief == "unknown":
             return "state_unknown"
         if self._pending():
@@ -212,8 +214,6 @@ class _Sim:
         if cmd.op == "on" and self.belief == "on":
             return "already_on"
         if cmd.op in ("amp_up", "amp_down"):
-            if self.backup_state == "active" and not self.primary_present:
-                return "backup_limited"
             if self.belief != "on":
                 return "not_on"
             lo, hi = PROGRAMS[self.belief_program].amp

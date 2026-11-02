@@ -101,6 +101,8 @@ def simulate(policy: str, fill_ml_per_s: float = 1.5, dur_s: float = 600.0, dt: 
         "ad_episodes": len(ad.events),
         "ad_seconds_above_limit": round(ad.seconds_above_limit, 1),
         "baseline_bp": ad.baseline_bp,
+        "ad_trigger_pressure": AD_PRESSURE_TRIGGER_cmH2O,
+        "start_volume": round(rec["volume"][0], 1),
         "peak_bp_rise": round(max(b - ad.baseline_bp for b in rec["bp"]), 1),
         "peak_pressure": round(max(rec["pressure"]), 1),
         "first_warning_s": round(first_warn_t, 1) if first_warn_t is not None else None,

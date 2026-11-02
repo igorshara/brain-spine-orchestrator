@@ -72,13 +72,16 @@ export function lineChart({ title, unit, xLabel, xUnit = '', series, source, hei
     svg.append(yAxis);
     if (baseline !== null) {
       svg.append(s('line', { x1: m.l, x2: W - m.r, y1: Y(baseline.value), y2: Y(baseline.value), class: 'baseline' }));
-      const label = s('text', { x: W - m.r - 4, y: Y(baseline.value) - 5, 'text-anchor': 'end', class: 'tick' });
-      label.textContent = baseline.label;
-      svg.append(label);
     }
     for (const d of series) {
       const path = d.y.map((v, i) => `${i ? 'L' : 'M'}${X(d.x[i]).toFixed(1)} ${Y(v).toFixed(1)}`).join('');
       svg.append(s('path', { d: path, fill: 'none', stroke: d.color, 'stroke-width': 2, 'stroke-linejoin': 'round' }));
+    }
+    if (baseline !== null) {
+      // After the lines, so a line never crosses its text.
+      const label = s('text', { x: W - m.r - 4, y: Y(baseline.value) - 5, 'text-anchor': 'end', class: 'tick tick-over' });
+      label.textContent = baseline.label;
+      svg.append(label);
     }
     if (labelled) {
       // Lines often end close together, so push the end labels apart.

@@ -304,3 +304,5 @@ tr[data-state='unknown'] .cmd-state { color: var(--amber-ink); }
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; }
 }
+
+.tick-over { paint-order: stroke; stroke: var(--porcelain); stroke-width: 4px; stroke-linejoin: round; }
