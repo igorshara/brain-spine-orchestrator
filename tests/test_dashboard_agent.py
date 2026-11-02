@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from bso.ad_guardian import simulate
 from bso.dashboard_agent import (
     answer,
     comment_on,
@@ -69,3 +70,17 @@ def test_tab_comment_per_tab():
 def test_ukrainian_available():
     a = answer("Які в мене програми ходьби?", use_llm=False, lang="ua")
     assert "ходьби" in a["text"].lower()
+
+
+def test_dysreflexia_figures_come_from_the_simulation():
+    none = simulate("none")[1]["ad_episodes"]
+    predictive = simulate("predictive")[1]["ad_episodes"]
+    for lang, text in (
+        ("en", answer("What about dysreflexia safety?", use_llm=False)["text"]),
+        ("ua", answer("Що з дисрефлексією?", use_llm=False, lang="ua")["text"]),
+        ("en", comment_on_tab("guard", {}, "en")),
+        ("en", session_summary("en")),
+        ("ua", session_summary("ua")),
+    ):
+        assert "377" not in text, lang
+        assert f"{predictive} " in text and f"{none} " in text, lang

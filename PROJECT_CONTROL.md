@@ -29,16 +29,18 @@ Check set: pytest, WebKit on the changed path. Codex: yes, product block, one re
 
 - 2026-11-02, labirynt exposure: `labirynt/` (a separate private app) sat in this public repository with its active PIN in the README and a gate bypass. Owner's answer: the couple has already opened it ("Уже відкрили"), so the live site and PIN stay unchanged. Removed from this branch and its history; the working copy is `~/claude-projects/labirynt`.
 
-- 2026-11-02, OWNER_DECISION OPEN, Codex round 2 NO-GO at 82ba35b (review 5356a7a05240). Review is capped; nothing fixed, no further checkpoint without the owner's explicit words.
-  - P1 `src/bso/patient_link.py:255`: switch-off goes through the safety check as a nonzero stimulation command, so it can be refused. Reproduced by deterministic replay: on, then 5 amp_up/amp_down pairs 5 s apart, then off gives `failed / safety_blocked` with the implant model still on. 1 pair is fine; 5, 10 and 20 pairs fail.
-  - P1 `src/bso/dashboard_agent.py:94,96,217,219,249,258`: the assistant still states "0 episodes vs 377 uncontrolled"; the current metric is 13 unmanaged, 0 predictive. Confirmed by grep; the UI request itself was not run.
-  - P2 deferred: `web/app/research.js:116` walking stage is blank while the mesh loads.
+- 2026-11-02, Codex round 2 NO-GO at 82ba35b (review 5356a7a05240), then one owner-authorized round. Owner's words: "Так, давай я дозволяю тобі все доробити." Fixed before round 3:
+  - P1 switch-off could be refused by the safety check (`src/bso/patient_link.py`). It delivers no stimulation, so the supervisor no longer vetoes it; regression test added.
+  - P1 the assistant stated "0 episodes vs 377" (`src/bso/dashboard_agent.py`). Figures now come from the same simulation as the Research charts: 13 with no control, 0 with prediction. "Validated" and "24/7" claims removed from its copy.
+  - P2 the Research walking stage now shows a loading text; fixed because the owner asked to finish everything.
 
 ## Next block
 
 Phase 5 partner package, after the phase 4 review closes. Stage 2 auto-tuning stays deferred.
 
 ## Latest handoff
+
+2026-11-02: corrective for Codex round 2 done. pytest 241 passed; WebKit by real clicks at 1440 and 390 px, 14 ok, 0 fails: 12 Increase/Decrease pairs then Switch off stops the implant, assistant matches `/api/guardian`, Research shows loading then the walker. Round 3 authorized by the owner and is the last. Nothing deployed.
 
 2026-11-02: branch rewritten without labirynt and force-pushed (82ba35b, tree identical to the pre-rewrite HEAD, PIN absent from history, local backup branch `backup/pre-labirynt-rewrite`). Codex round 2 NO-GO with two P1, see Owner decisions. Waiting for the owner's decision. Review block item stays open; nothing deployed.
 

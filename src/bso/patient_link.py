@@ -247,7 +247,11 @@ class _Sim:
             self.truth_amp = verdict
 
     def _safety_check(self, cmd: _Command) -> float | None:
-        """Every command passes the supervisor; returns the applied amplitude or None."""
+        """Every stimulating command passes the supervisor; returns the applied amplitude or None."""
+        if cmd.op == "off":
+            # Switching off delivers no stimulation, so the supervisor has nothing to veto.
+            self._clamped = False
+            return 0.0
         index = _program_index(cmd.program) if cmd.op == "program" else self.truth_program
         program = PROGRAMS[index]
         self.safety.tick(self.t, max(0.0, self.t - self._last_safety_t))

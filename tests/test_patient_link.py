@@ -169,6 +169,20 @@ def test_backup_can_only_switch_off():
     assert state["implant_model"]["program"] == replay(paired, ready + 3)["implant_model"]["program"]
 
 
+def test_switch_off_cannot_be_blocked_by_the_safety_supervisor():
+    events, t = list(ON), 5
+    for _ in range(5):
+        events += [cmd(t, "amp_up"), cmd(t + 5, "amp_down")]
+        t += 10
+    # Repeated changes trip the persistent proxy, so a change is now refused.
+    blocked = replay(events + [cmd(t, "amp_up")], t + 5)
+    assert blocked["commands"][-1]["reason"] == "safety_blocked"
+
+    state = replay(events + [cmd(t, "off")], t + 5)
+    assert state["commands"][-1]["state"] == "acknowledged"
+    assert state["implant_model"]["on"] is False and state["controller"]["state"] == "off"
+
+
 def start(t=2, minutes=60):
     return {"t": t, "type": "reminder_start", "minutes": minutes}
 

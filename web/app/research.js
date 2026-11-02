@@ -113,7 +113,8 @@ function programPlot(programs) {
 }
 
 export function mount(root) {
-  const stage = h('div', { class: 'stage-canvas stage-canvas-small', 'data-testid': 'research-walker' });
+  const stage = h('div', { class: 'stage-canvas stage-canvas-small', 'data-testid': 'research-walker' },
+    h('p', { class: 'stage-wait', role: 'status' }, t('Loading the walking model', 'Завантажую модель ходи')));
   const slider = h('input', { type: 'range', min: 0, max: 59, value: 0, 'aria-label': t('Gait cycle frame', 'Кадр циклу ходи'), id: 'frame' });
   const playBtn = h('button', { class: 'btn', type: 'button' }, t('Pause', 'Пауза'));
   const gaitSlot = h('div', {});
@@ -171,6 +172,7 @@ export function mount(root) {
     });
     gaitSlot.replaceChildren(gaitChart);
     slider.max = angles.length - 1;
+    stage.replaceChildren();
     walker = createWalker(stage, data, {
       height: stage.clientHeight || 360,
       onFrame: (i) => { slider.value = i; gaitChart.mark(i); },

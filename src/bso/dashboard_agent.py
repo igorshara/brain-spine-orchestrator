@@ -15,11 +15,19 @@ device settings and clinical decisions stay with the clinician.
 from __future__ import annotations
 
 import os
+from functools import lru_cache
 
+from .ad_guardian import simulate
 from .advisor import assess
 from .stim_programs import PROGRAMS, for_intent, recommend, summary
 
 _INTENT = {"idle": ("idle", "спокій"), "stand": ("stand", "стояти"), "walk": ("walk", "йти")}
+
+
+@lru_cache(maxsize=1)
+def _ad_episodes() -> tuple[int, int]:
+    """Episodes with no control and with prediction, from the simulation the charts draw."""
+    return simulate("none")[1]["ad_episodes"], simulate("predictive")[1]["ad_episodes"]
 
 
 def _fmt(p) -> str:
@@ -88,12 +96,13 @@ def _rule_answer(q: str, lang: str = "en") -> str | None:
 
     if any(w in t for w in ("dysreflex", "safety", "blood pressure", "дисрефлекс",
                             "тиск", "безпек")):
+        none, predictive = _ad_episodes()
         if en:
             return ("The autonomic-dysreflexia guardian predicts a BP surge by trend and "
-                    "lowers the stim drive EARLY (predictive), 24/7 — vs reactive care. "
-                    "In the demo: 0 episodes vs 377 uncontrolled.")
-        return ("Вартовий автономної дисрефлексії прогнозує стрибок АТ і знижає драйв "
-                "ЗАВЧАСНО, 24/7. У демо: 0 епізодів проти 377 без керування.")
+                    "lowers the stim drive early. "
+                    f"In the simulation: {predictive} episodes with prediction, {none} with no control.")
+        return ("Вартовий автономної дисрефлексії прогнозує стрибок АТ і завчасно знижує драйв. "
+                f"У симуляції: {predictive} епізодів із прогнозом, {none} без керування.")
 
     # specific slot like "A2", "B3"
     for p in PROGRAMS:
@@ -162,10 +171,10 @@ def comment_on_tab(tab: str, m: dict, lang: str = "en") -> str:
         return v if v is not None else d
 
     if tab == "osim":
-        return (f"Ran the validated OpenSim model ({g('muscles', 18)} Hill muscles). "
+        return (f"Ran the OpenSim model ({g('muscles', 18)} Hill muscles). "
                 f"Left/right hip correlation {g('lr_hip_corr')} — motion is muscle-driven "
                 "(forward dynamics), not drawn. Real anatomy, not a stick figure.") if en else (
-                f"Прогнав валідовану OpenSim-модель ({g('muscles', 18)} м'язів). "
+                f"Прогнав OpenSim-модель ({g('muscles', 18)} м'язів). "
                 f"Кореляція L/R стегна {g('lr_hip_corr')} — рух від сил м'язів, не намальований.")
     if tab == "programs":
         return (f"Loaded your {g('n_programs', 20)} real programs in banks A/B/C, published by you. "
@@ -214,9 +223,11 @@ def comment_on_tab(tab: str, m: dict, lang: str = "en") -> str:
                 "Пластина 5-6-5: кожен контакт підписаний за анатомією. Обери ціль — агент "
                 "підсвітить контакти й параметри.")
     if tab == "guard":
-        return ("Dysreflexia guardian: 0 episodes (predictive) vs 377 uncontrolled. Predicts "
-                "the BP surge by trend and lowers the drive EARLY — 24/7.") if en else (
-                "Вартовий дисрефлексії: 0 епізодів проти 377. Прогнозує стрибок АТ завчасно, 24/7.")
+        none, predictive = _ad_episodes()
+        return (f"Dysreflexia guardian, simulated: {predictive} episodes with prediction, {none} with "
+                "no control. It predicts the BP surge by trend and lowers the drive early.") if en else (
+                f"Вартовий дисрефлексії, симуляція: {predictive} епізодів із прогнозом, {none} без "
+                "керування. Прогнозує стрибок АТ завчасно.")
     if tab == "auto":
         return (f"Bladder: peak pressure {g('peak_pressure')} cmH₂O, residual {g('residual_ml')} "
                 f"mL, dysreflexia events {g('ad_events')}. Coordinated EES keeps pressure "
@@ -237,6 +248,7 @@ def session_summary(lang: str = "en") -> str:
     s = summary()
     from .program_mapping import map_all
     pm = map_all(seed=0)["metrics"]
+    none, predictive = _ad_episodes()
     walk = recommend("walk")
     if lang != "ua":
         return (
@@ -246,16 +258,16 @@ def session_summary(lang: str = "en") -> str:
             f"program (e.g. {walk.slot} «{walk.label}») → safety guardian → pattern. "
             f"Auto-mapping (GP-BO) finds the contact for each program in ~{pm['gp_mean_queries']} "
             f"probes instead of ~{pm['rand_mean_queries']} at random ({pm['speedup']}× — saved "
-            "clinician time). The autonomic-dysreflexia guardian gives 0 episodes vs 377 "
-            "uncontrolled — life-safety 24/7. Bladder: coordinated EES keeps pressure below the "
-            "the upper-tract criterion limit. All on the validated OpenSim model (18 Hill muscles), not a stick "
+            f"clinician time). The simulated autonomic-dysreflexia guardian gives {predictive} episodes "
+            f"with prediction, {none} with no control. Bladder: coordinated EES keeps pressure below the "
+            "the upper-tract criterion limit. All on the OpenSim model (18 Hill muscles), not a stick "
             "figure. HONEST: this is a research simulation — methods are real, synthetic numbers "
             "are illustrative; next step is real sensors and telemetry from the clinical partner/the device partner.")
     return (
         f"Загальна картина. {s['n_programs']} реальних програм (групи {', '.join(s['groups'])}). "
         f"Ланцюг замкнутий: намір → твоя програма ({walk.slot}) → safety → патерн. Авто-мапінг "
         f"~{pm['gp_mean_queries']} проб проти ~{pm['rand_mean_queries']} ({pm['speedup']}×). "
-        "Вартовий дисрефлексії 0 проти 377. Це дослідницька симуляція — методи реальні, "
+        f"Вартовий дисрефлексії, симуляція: {predictive} із прогнозом, {none} без керування. Це дослідницька симуляція — методи реальні, "
         "числа ілюстративні.")
 
 
