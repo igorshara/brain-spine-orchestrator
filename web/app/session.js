@@ -1,3 +1,4 @@
+import { createTrace } from './trace.js';
 import { h, t, clock } from './ui.js';
 import { Sim, SWITCHED_ON } from './link.js';
 import { Guide } from './guide.js';
@@ -121,6 +122,7 @@ const REMINDER_LINE = {
 
 export function mount(root, param) {
   const sim = new Sim(() => update());
+  const trace = createTrace(sim);
   const guideHost = h('div', { class: 'guide', 'aria-live': 'polite' });
   const guide = new Guide(guideHost, sim, () => play(current));
   let current = SCENARIOS[param] ? param : 'answered';
@@ -162,7 +164,7 @@ export function mount(root, param) {
     h('h1', {}, t('A reminder you cannot sleep through', 'Нагадування, яке не проґавиш')),
     h('p', { class: 'lead' }, t('You set it. If you do not answer, it asks again, and then it tells someone you trust.',
       'Ви його ставите. Якщо не відповідаєте, воно запитує знову, а потім повідомляє людину, якій ви довіряєте.')),
-    strip, guideHost, paused, panel,
+    strip, guideHost, paused, panel, trace.node,
     h('details', { class: 'panel' },
       h('summary', {}, t('Try it yourself', 'Спробувати самому')),
       h('h3', {}, t('Start a reminder', 'Запустити нагадування')), presets,
@@ -178,6 +180,7 @@ export function mount(root, param) {
     const st = sim.state;
     if (!st) return;
     guide.update(st);
+    trace.update(st);
     if (sim.failed) {
       line.textContent = '';
       known.textContent = '';

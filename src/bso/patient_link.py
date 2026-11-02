@@ -130,6 +130,7 @@ class _Sim:
     unknown_since: float | None = None
     commands: list = field(default_factory=list)
     log: list = field(default_factory=list)
+    timeline: list = field(default_factory=list)
     auto_reminder_min: float | None = None
     reminder: dict | None = None
     reminder_epoch: int = 0
@@ -430,12 +431,33 @@ class _Sim:
                 self.reminder["escalated"] = True
                 self.note("reminder_escalated")
 
+    def _mark(self) -> None:
+        """Record a timeline row whenever what the controller says or the implant does changes."""
+        row = {"controller": self.belief, "pending": self._pending(),
+               "implant_on": self.truth_on, "link_up": self.link_up}
+        if self.timeline and self.timeline[-1]["t"] == self.t:
+            self.timeline[-1].update(row)
+        elif not self.timeline or any(self.timeline[-1][k] != v for k, v in row.items()):
+            self.timeline.append({"t": self.t, **row})
+
     def run(self) -> float | None:
+        self._mark()
         while self.queue and self.queue[0][0] <= self.now:
             self.t, _, kind, payload = heapq.heappop(self.queue)
             self.handle_internal(kind, payload)
+            self._mark()
         self.t = self.now
         return self.queue[0][0] if self.queue else None
+
+
+def _disagrees(row: dict) -> bool:
+    """The screen does not match the implant: a state is unknown, or a settled state is wrong."""
+    return row["controller"] == "unknown" or (row["controller"] == "on") != row["implant_on"]
+
+
+def disagreement_seconds(timeline: list, now: float) -> float:
+    ends = [row["t"] for row in timeline[1:]] + [now]
+    return sum(end - row["t"] for row, end in zip(timeline, ends) if _disagrees(row))
 
 
 def replay(events: list, now: float) -> dict:
@@ -481,4 +503,6 @@ def replay(events: list, now: float) -> dict:
         "reminder": reminder,
         "auto_reminder_min": sim.auto_reminder_min,
         "log": sim.log,
+        "timeline": sim.timeline,
+        "disagreement_s": disagreement_seconds(sim.timeline, now),
     }

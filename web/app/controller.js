@@ -1,3 +1,4 @@
+import { createTrace } from './trace.js';
 import { h, t, ago, clock, getJSON, range } from './ui.js';
 import { Sim, SWITCHED_ON } from './link.js';
 import { Guide } from './guide.js';
@@ -261,13 +262,14 @@ export function mount(root, param) {
       h('h2', {}, t('What the implant is actually doing', 'Що насправді робить імплант')), truthWord, truthDetail,
       h('p', { class: 'small' }, t('The simulator’s view. No real system can show this.', 'Погляд симулятора. Жодна реальна система цього не покаже.'))));
 
+  const trace = createTrace(sim);
   const free = (label, ev) => h('button', { class: 'btn', type: 'button', on: { click: () => sim.push(ev) } }, label);
 
   root.replaceChildren(h('div', { class: 'screen' },
     h('h1', {}, t('A controller that never guesses', 'Пульт, який ніколи не вгадує')),
     h('p', { class: 'lead' }, t('It shows only what the implant has confirmed. When it cannot know, it says so.',
       'Він показує лише те, що підтвердив імплант. Коли знати неможливо, він так і каже.')),
-    strip, guideHost, paused, twin, timelineSlot,
+    strip, guideHost, paused, twin, timelineSlot, trace.node,
     h('section', { class: 'panel controls' },
       h('h2', {}, t('Controls', 'Керування')),
       h('div', { class: 'control-row' },
@@ -325,6 +327,7 @@ export function mount(root, param) {
     const st = sim.state;
     if (!st) return;
     guide.update(st);
+    trace.update(st);
     if (sim.failed) {
       word.textContent = '';
       detail.textContent = '';

@@ -275,3 +275,33 @@ def test_http_replay_returns_state_and_rejects_bad_input():
             urllib.request.urlopen(url + "/app/..%2Fserver.py")
     finally:
         httpd.shutdown()
+
+
+def test_timeline_shows_the_screen_and_the_implant_disagreeing_after_a_lost_answer():
+    state = replay([cmd(0, "on"), link(5, "lost_after"), cmd(6, "off")], 100.0)
+    rows = state["timeline"]
+    assert rows[0] == {"t": 0.0, "controller": "off", "pending": True, "implant_on": False, "link_up": True}
+    assert any(r["controller"] == "unknown" and not r["implant_on"] for r in rows)
+    # 0.6 s while the first answer travels, 7.4 s until the timeout, then 86 s of unknown.
+    assert state["disagreement_s"] == pytest.approx(0.6 + 7.4 + 86.0)
+
+
+def test_timeline_has_no_disagreement_once_a_good_link_settles():
+    state = replay([cmd(0, "on"), cmd(10, "off")], 60.0)
+    assert state["disagreement_s"] == pytest.approx(0.6 + 0.6, abs=0.01)
+    assert state["timeline"][-1]["controller"] == "off"
+    assert state["timeline"][-1]["implant_on"] is False
+
+
+def test_screen_never_settles_on_off_while_the_implant_is_stimulating():
+    rng = random.Random(20261102)
+    for _ in range(300):
+        t, events = 0.0, []
+        for _ in range(rng.randint(1, 12)):
+            t += rng.choice([0.1, 0.5, 2.0, 9.0, 30.0])
+            events.append(rng.choice([
+                cmd(t, "on"), cmd(t, "off"), link(t, rng.choice(["good", "refused", "lost_before", "lost_after"])),
+                {"t": t, "type": "leave_home"}, {"t": t, "type": "go_back"}, {"t": t, "type": "backup_pair"},
+            ]))
+        for row in replay(events, t + 60.0)["timeline"]:
+            assert not (row["controller"] == "off" and not row["pending"] and row["implant_on"]), events

@@ -223,7 +223,31 @@ tr[data-state='unknown'] .cmd-state { color: var(--amber-ink); }
 .drawer-form label { grid-column: 1 / -1; font-size: 14px; }
 .drawer-form input { font: inherit; font-size: 16px; min-height: 44px; padding: 8px 10px; border: 1.5px solid var(--graphite); border-radius: 4px; background: #fff; min-width: 0; }
 
+/* What the screen said against what the implant did, on one time axis. */
+.trace-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 24px; }
+.trace-sum { font-size: 20px; font-weight: 500; margin: 0; }
+.trace-sum[data-apart='true'] { color: var(--red); }
+.trace-grid { display: grid; grid-template-columns: 150px 1fr; gap: 6px 12px; align-items: center; margin-top: 14px; }
+.trace-name { font-size: 14px; margin: 0; line-height: 1.25; }
+.trace-track { position: relative; height: 34px; background: var(--paper); border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+.trace-track-thin { height: 12px; }
+.seg { position: absolute; top: 0; bottom: 0; min-width: 2px; }
+.seg-on { background: var(--teal); }
+.seg-off { background: #C3CDCB; }
+.seg-wait { background: repeating-linear-gradient(90deg, var(--teal) 0 3px, #A9D0C7 3px 6px); }
+.seg-unknown { background: repeating-linear-gradient(135deg, var(--amber) 0 5px, #F0D29F 5px 10px); }
+.seg-apart { background: var(--red); }
+.trace-axis { grid-column: 2; display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.trace-key { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 0; margin: 12px 0; font-size: 14px; }
+.trace-key li { display: flex; align-items: center; gap: 7px; }
+.trace-key .seg { position: static; display: inline-block; width: 22px; height: 12px; border-radius: 2px; }
+.trace-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.trace-tools details { flex-basis: 100%; }
+
 @media (max-width: 960px) {
+  .trace-grid { grid-template-columns: 1fr; gap: 3px; }
+  .trace-name { margin-top: 8px; }
+  .trace-axis { grid-column: 1; }
   :root { --gutter: 16px; }
   .ledger thead { display: none; }
   .ledger tr { display: grid; grid-template-columns: 72px 1fr auto; column-gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
