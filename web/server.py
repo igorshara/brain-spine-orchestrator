@@ -743,6 +743,8 @@ class Handler(BaseHTTPRequestHandler):
                 prop = build_proposal(idx, q.get("lang", "en")) if idx < N_PROPOSALS else None
                 self._api("/api/proposal", {"proposal": prop, "log": log,
                                             "reviewed": idx, "total": N_PROPOSALS}, "illustrative")
+            elif u.path == "/healthz":
+                self._send(200, json.dumps({"status": "ok", "sha": os.environ.get("RAILWAY_GIT_COMMIT_SHA", "")}))
             elif u.path in ("/", "/index.html"):
                 with open(os.path.join(HERE, "app", "index.html"), "rb") as f:
                     self._send(200, f.read(), "text/html; charset=utf-8")
