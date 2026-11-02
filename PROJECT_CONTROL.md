@@ -9,16 +9,17 @@
 ## Active block
 
 <!-- IHOR_BLOCK_PROGRESS:START v1 -->
-Block: B3-VISUALS
-- [x] Blender system scene on Overview, labelled as an illustration, with four parts explained in order
-- [x] Every chart carries units, a labelled baseline, sample count, source and a table of the numbers
-- [x] Charts drawn at real pixel width, legible at 390 px; programs table closed by default
-- [x] A refused or overlong run shows no state and offers a restart; the walker stage shows a loading state
-- [x] WebKit click-through at 1440 and 390 px and full pytest green
-- [ ] Phase 4: one Codex review of B2 and B3 together, at most two rounds
+Block: B4-PACKAGE
+- [x] README, `docs/validation.md` and the partner briefs match the current product: no retracted or unsupported claim, figures reproduced from code
+- [x] One-page English summary as a final PDF on Desktop, with a Ukrainian translation
+- [x] 60-second demo script that follows the real screens, checked against them
+- [x] Letters to University of Louisville and Medtronic, with Ukrainian translations, sending nothing
+- [x] Package checked: control figures match the code, PDFs open and read clean, pytest green
 <!-- IHOR_BLOCK_PROGRESS:END -->
 
-Check set: pytest, WebKit on the changed path. Codex: yes, product block, one review covering B2 and B3.
+Check set: pytest, deterministic reproduction of each quoted figure, PDF render inspected. Codex: no, documents. Nothing is sent or deployed in this block.
+
+B2-SCREENS and B3-VISUALS closed: Codex GO at f752025 (review bd87b33c5948, owner-authorized round 3), no findings.
 
 ## Owner decisions
 
@@ -36,9 +37,13 @@ Check set: pytest, WebKit on the changed path. Codex: yes, product block, one re
 
 ## Next block
 
-Phase 5 partner package, after the phase 4 review closes. Stage 2 auto-tuning stays deferred.
+Delivery of the new site to the live URL, on the owner's word. Stage 2 auto-tuning stays deferred.
 
 ## Latest handoff
+
+2026-11-02: B4-PACKAGE closed. Added `/healthz` (d437d80, separate commit, not live until deployed). Package in `~/Desktop/BCI/BSO — Пакет 2026-11` (summary, 60-second demo script, letters to University of Louisville and Medtronic, each EN + UA); sources in `~/Desktop/BCI/Код та робочі матеріали/package_2026-11`. Demo path walked in WebKit by real clicks at 1440 px, 0 page errors, test server stopped, port closed; narration 134 words, timing by word count, not rehearsed aloud. pytest 242 passed. June package and the letter with the retracted pilot claim moved to `~/Desktop/BCI/_Архів`. Nothing sent, nothing pushed, nothing deployed: the letters link the live URL, which still serves the old build. Next: owner's word on push, merge and deploy.
+
+2026-11-02: Codex round 3 GO at f752025, no findings. B2 and B3 closed. Phase 5 package started as B4-PACKAGE. Nothing deployed; the live URL still serves the old build.
 
 2026-11-02: corrective for Codex round 2 done. pytest 241 passed; WebKit by real clicks at 1440 and 390 px, 14 ok, 0 fails: 12 Increase/Decrease pairs then Switch off stops the implant, assistant matches `/api/guardian`, Research shows loading then the walker. Round 3 authorized by the owner and is the last. Nothing deployed.
 
