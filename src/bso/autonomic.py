@@ -19,6 +19,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import Enum
@@ -88,10 +89,12 @@ class BladderModel:
     detrusor_gain_cmH2O: float = 90.0   # contraction pressure at full drive
     dyssynergia: bool = True            # SCI default; modulation can override
     reflex_threshold_ml: float = 300.0  # uninhibited reflex contraction volume
+    reflex_release_ml: float = 280.0    # reflex stops below this (hysteresis, ILLUSTRATIVE)
     # state
     pressure_cmH2O: float = 0.0
     sphincter_tone: float = 1.0         # 0..1 outlet resistance
     last_outflow_ml_s: float = 0.0
+    reflex_active: bool = False
 
     def _passive_pressure(self) -> float:
         return self.volume_ml / self.compliance
@@ -103,7 +106,11 @@ class BladderModel:
         # the detrusor and the sphincter follows the relaxation command.
         attempting = command == AutonomicCommand.VOID
         if self.dyssynergia:
-            reflex = 1.0 if (self.volume_ml > self.reflex_threshold_ml or attempting) else 0.0
+            if self.volume_ml > self.reflex_threshold_ml:
+                self.reflex_active = True
+            elif self.volume_ml < self.reflex_release_ml:
+                self.reflex_active = False
+            reflex = 1.0 if (self.reflex_active or attempting) else 0.0
             detrusor = max(drive.organ_drive, 0.8 * reflex)
             self.sphincter_tone = min(1.0, 0.5 + 0.5 * detrusor)
         else:
@@ -186,15 +193,22 @@ class AutonomicDysreflexiaMonitor:
     def __init__(self, baseline_bp: float = 110.0) -> None:
         self.baseline_bp = baseline_bp
         self.bp = baseline_bp
-        self.events: list[tuple[float, str]] = []
+        self.events: list[tuple[float, str]] = []  # one entry per episode, at its onset
+        self.seconds_above_limit = 0.0
+        self._above_limit = False
 
     def update(self, t: float, organ_pressure_proxy: float, dt: float) -> float:
         # BP rises when a noxious distension/pressure exceeds the AD trigger.
         drive = max(0.0, organ_pressure_proxy - AD_PRESSURE_TRIGGER_cmH2O)
         target = self.baseline_bp + 1.5 * drive
-        self.bp += 3.0 * (target - self.bp) * dt
-        if self.bp - self.baseline_bp > AD_BP_RISE_LIMIT:
-            self.events.append((t, f"AD risk: systolic +{self.bp - self.baseline_bp:.0f} mmHg"))
+        # Exact first-order step, so the result does not depend on the step size.
+        self.bp += (target - self.bp) * (1.0 - math.exp(-3.0 * dt))
+        above = self.bp - self.baseline_bp > AD_BP_RISE_LIMIT
+        if above:
+            self.seconds_above_limit += dt
+            if not self._above_limit:
+                self.events.append((t, f"AD risk: systolic +{self.bp - self.baseline_bp:.0f} mmHg"))
+        self._above_limit = above
         return self.bp
 
     @property

@@ -60,7 +60,7 @@ Deterministic, no ML, **19/19 safety tests pass**. `SafetySupervisor.check()` is
 
 **Topological safety invariant (verified):** every command producer publishes to **one** topic (`stim_commands`); a **single** consumer unconditionally runs each command through `safety.check()` before activation. Bypassing is impossible *by topology*, not by convention. `unified.py` codifies the checkable invariant `locomotion.safety is autonomic.safety is self.safety` — literally one gate for locomotion and autonomic. **No LLM is ever in the realtime motor loop.**
 
-This is a regulatory-aware pattern into which a partner drops their own clinically validated limits: only the constants in `limits.py` and the proxy bodies change; the `check()/tick()` contract and the "no command bypasses the gate" guarantee remain.
+This is a regulatory-aware pattern into which a partner drops their own clinically validated limits: only the constants in `limits.py` and the proxy bodies change; the `check()/tick()` contract and the single-gate topology stay, and any real use would need its own verification and regulatory work.
 
 ---
 
@@ -144,7 +144,7 @@ A clinical neuromodulation partner — an epidural-stimulation pioneer like Veri
 1. Drop a real ECoG/BCI decoder in place of `DecoderStub` (the `Intent` contract).
 2. Drop a real implant recruitment calibration in place of the phenomenological curve.
 3. Drop an X-ray-verified contact→muscle map in place of the anatomical hypothesis.
-4. Drop real clinically validated safety limits and biophysics (Shannon k, real charge density, a real tissue thermal model, real AD physiology) into the already-built veto frame — only the constants and proxy bodies change; the guarantee stays.
+4. Drop real clinically validated safety limits and biophysics (Shannon k, real charge density, a real tissue thermal model, real AD physiology) into the already-built veto frame — the gate topology stays; the limits, proxies and overall system would need clinical validation and regulatory work.
 5. Connect live stimulator telemetry/EMG via `telemetry.TelemetrySource` (one interface implementation; BSO stays read-only — a certified programmer controls stimulation).
 6. Supply a real SCI cohort to the foundation model (`cohort.py`) — the claimed advantage that the code does not yet materialise.
 7. Expose your official patient-control API so the cockpit becomes a real one-app remote — program select, level and on/off within clinician-set bounds — removing the separate handheld and charger for the patient.

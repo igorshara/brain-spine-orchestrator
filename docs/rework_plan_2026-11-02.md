@@ -1,6 +1,6 @@
 # BSO rework plan (2026-11-02)
 
-Status: proposed, awaiting owner decisions. Based on `34242c0`, a WebKit capture of all 22 tabs, independent Codex and Gemini reviews, and web research. Owner-facing version: `~/Desktop/BSO_План_доопрацювання.pdf`.
+Status: direction accepted by the owner on 2026-11-02. Based on `34242c0`, a WebKit capture of all 22 tabs, independent Codex and Gemini reviews, and web research. Owner-facing version: `~/Desktop/BSO_План_доопрацювання.pdf`.
 
 ## Decision
 
@@ -19,7 +19,7 @@ Rebuild BSO as a four-screen, explicitly simulated demonstrator of a "patient-le
 | Screen | Sources | Content |
 |---|---|---|
 | Overview | flow (rewritten) | The two pains, what this is and is not |
-| Controller | cockpit, programs | Fictional programs; requested / acknowledged / failed / unknown states |
+| Controller | cockpit, programs | Owner's real programs, published by him and labelled; simulated responses; requested / acknowledged / failed / unknown states |
 | Session | new | User-started reminder timer, acknowledgement, unanswered and connection-loss scenarios |
 | Research (optional) | approve, map, plate, sensors, gym, loco, osim | Labelled synthetic examples, walking model |
 
@@ -35,7 +35,7 @@ Design rules:
 
 | Sev | Finding | Evidence | Fix |
 |---|---|---|---|
-| P1 | Owner's real stimulation programs are public | Live `GET /api/programs` returned 20 programs with parameters, no auth, on 2026-11-02; `src/bso/stim_programs.py` in a public repo; `CLAUDE.md` invariant 7 and the UI banner say otherwise | Remove from demo, use fictional data; repo visibility is an owner decision |
+| P1 | Public copy contradicts the data shown | Live `GET /api/programs` returned the owner's 20 real programs on 2026-11-02 while the UI banner says no patient data. Owner decision 2026-11-02: the programs stay public | Keep the data; state that the owner published his own programs and the rest is simulated |
 | P1 | AD headline metric is a numerical artefact | `ad_guardian.simulate`, policy `none`: dt 0.5 gives 377 events, 0.25 gives 1249, 0.1 gives 1246, 0.05 gives 0; peak rise 106.6 to 38.5 mmHg. `autonomic.py:195-197` appends one event per step above the limit | Count episodes and duration, verify convergence, hide the figure until then |
 | P1 | Auto-mapping recovers its own assumption | `program_mapping.py:25` derives the "true" contact from character codes of the program text | Label as a synthetic algorithm demo |
 | P1 | Unsupported clinical and readiness claims | `web/index.html:323`; `docs/partner_brief_verita_EN.md:147` | Rewrite as simulation-scoped capability statements |
@@ -59,7 +59,7 @@ No generated video is evidence.
 
 | # | Scope | Acceptance criterion | Estimate | Codex |
 |---|---|---|---|---|
-| 1 | Claims, public data, AD metric, labels | Every external claim has evidence or a hypothesis label; no real programs in the public demo; AD metric converges across dt | 1-2 d | with phase 4 |
+| 1 | Claims, public data, AD metric, labels | Every external claim has evidence or a hypothesis label; public copy accurately describes the owner's published programs; AD metric converges across dt | 1-2 d | with phase 4 |
 | 2 | Four screens and failure scenarios | First-time viewer understands both pains unaided; unknown state never shown as confirmed | 4-7 d | with phase 4 |
 | 3 | Visual rebuild | Every visual labelled; legible at 390 px | 3-5 d | with phase 4 |
 | 4 | WebKit desktop and mobile path tests, full pytest, one review | All scenarios clicked through; tests green; no open P0/P1 | 3-5 d | yes, product block |

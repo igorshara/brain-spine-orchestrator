@@ -182,6 +182,7 @@ def run_mapping(p):
     }
 
 
+VALID_DECISIONS = ("approve", "reject", "modify")
 CACHE_DIR = os.path.join(HERE, "cache")
 import tempfile  # noqa: E402
 CLINIC_DB = os.path.join(tempfile.gettempdir(), "bso_clinic.db")  # clinician-approval audit log (ephemeral)
@@ -796,8 +797,11 @@ class Handler(BaseHTTPRequestHandler):
                                                 "proposal": None, "reviewed": idx,
                                                 "total": N_PROPOSALS}))
                     return
+                decision = body.get("decision")
+                if decision not in VALID_DECISIONS:
+                    self._send(400, json.dumps({"ok": False, "error": "explicit decision required"}))
+                    return
                 prop = build_proposal(idx, lang)             # the one the clinician saw
-                decision = body.get("decision", "approve")
                 ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 log_decision(db, ts, prop, decision, note=body.get("note", ""))
                 log = list_decisions(db)

@@ -157,6 +157,8 @@ def comment_on_tab(tab: str, m: dict, lang: str = "en") -> str:
 
     def g(k, d=0):
         v = m.get(k, d)
+        if isinstance(v, float) and v.is_integer():  # query params arrive as floats
+            return int(v)
         return v if v is not None else d
 
     if tab == "osim":
@@ -166,13 +168,10 @@ def comment_on_tab(tab: str, m: dict, lang: str = "en") -> str:
                 f"Прогнав валідовану OpenSim-модель ({g('muscles', 18)} м'язів). "
                 f"Кореляція L/R стегна {g('lr_hip_corr')} — рух від сил м'язів, не намальований.")
     if tab == "programs":
-        mp = m.get("mapping", {})
-        return (f"Loaded your {g('n_programs', 20)} real programs in banks A/B/C. the clinical partner "
-                f"tuned them by hand ~{mp.get('manual_minutes', '?')} min; the agent would "
-                f"narrow the search to ~{mp.get('auto_minutes', '?')} min "
-                f"({mp.get('speedup', '?')}× faster).") if en else (
-                f"Завантажив твої {g('n_programs', 20)} реальних програм. the clinical partner підбирала "
-                f"~{mp.get('manual_minutes', '?')} хв; агент ~{mp.get('auto_minutes', '?')} хв.")
+        return (f"Loaded your {g('n_programs', 20)} real programs in banks A/B/C, published by you. "
+                "Auto-mapping here runs on a synthetic response model.") if en else (
+                f"Завантажив твої {g('n_programs', 20)} реальних програм, опублікованих тобою. "
+                "Авто-мапінг тут працює на синтетичній моделі реакції.")
     if tab == "sensors":
         conf = int(g("decode_conf") * 100)
         return (f"Decoding intent from residual signals: confidence {conf}%, current intent "

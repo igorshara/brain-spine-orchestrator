@@ -191,7 +191,7 @@
       <h1>Brain-Spine Orchestrator <span style="font-family:Inter;font-weight:600;font-size:11px;
         color:var(--acc2);border:1px solid rgba(34,211,238,.4);border-radius:6px;padding:1px 6px;
         -webkit-text-fill-color:var(--acc2);vertical-align:middle;margin-left:4px">BSO</span></h1>
-      <div class="banner">RESEARCH SIMULATION — ILLUSTRATIVE values, not a medical device, no patient data.</div>
+      <div class="banner">RESEARCH SIMULATION — not a medical device. The stimulation programs are the owner's own, published by him; every body response is simulated.</div>
     </div>
   </div>
   <div style="display:flex;gap:8px">
@@ -290,7 +290,7 @@
       <span class="fl-badge" data-en="<b>Safety veto</b> on every command" data-ua="<b>Вето безпеки</b> на кожну команду"><b>Safety veto</b> on every command</span>
       <span class="fl-badge" data-en="<b>CPG</b> phase-wise gait" data-ua="<b>CPG</b> — фазова хода"><b>CPG</b> phase-wise gait</span>
       <span class="fl-badge" data-en="Kinematic · MuJoCo · <b>OpenSim</b> bodies" data-ua="Тіла: кінематика · MuJoCo · <b>OpenSim</b>">Kinematic · MuJoCo · <b>OpenSim</b> bodies</span>
-      <span class="fl-badge" data-en="<b>84 tests</b> green" data-ua="<b>84 тести</b> зелені"><b>84 tests</b> green</span>
+      <span class="fl-badge" data-en="<b>Automated tests</b> in repo" data-ua="<b>Автотести</b> в репозиторії"><b>Automated tests</b> in repo</span>
     </div>
   </div>
 
@@ -320,7 +320,7 @@
       <p data-en="The walking loop, fully closed and working: intent becomes phase-coordinated muscle targets, then safety-checked stimulation, then movement, then sensor feedback — every cycle." data-ua="Контур ходи — повністю замкнутий і робочий: намір стає фазово-скоординованими цілями мʼязів, далі — перевірена безпекою стимуляція, далі рух, далі сенсорний зворотний звʼязок — щоцикл.">The walking loop, fully closed and working: intent becomes phase-coordinated muscle targets, then safety-checked stimulation, then movement, then sensor feedback — every cycle.</p>
       <span class="mod">Decoder → Orchestrator → Effectors → Safety → SpinalCord → Body → Feedback</span></div>
     <div class="fl-card"><h3><span class="d"></span><span data-en="Autonomic loop" data-ua="Автономний контур">Autonomic loop</span></h3>
-      <p data-en="Bladder, bowel and erectile function run on the SAME safety supervisor. Coordinated EES restores low-pressure, complete bladder emptying and prevents autonomic dysreflexia — outcomes patients rank as high as walking." data-ua="Сечовий міхур, кишківник і еректильна функція працюють на ТОМУ Ж safety-супервізорі. Скоординована EES відновлює спорожнення міхура за низького тиску й запобігає автономній дисрефлексії — результати, які пацієнти цінують не нижче за ходьбу.">Bladder, bowel and erectile function run on the SAME safety supervisor. Coordinated EES restores low-pressure, complete bladder emptying and prevents autonomic dysreflexia — outcomes patients rank as high as walking.</p>
+      <p data-en="Bladder, bowel and erectile function run on the SAME safety supervisor. In this simulation, coordinated EES empties the model bladder at low pressure and keeps the dysreflexia proxy below its limit." data-ua="Сечовий міхур, кишківник і еректильна функція працюють на ТОМУ Ж safety-супервізорі. У цій симуляції скоординована EES спорожнює модель міхура за низького тиску й тримає проксі дисрефлексії нижче межі.">Bladder, bowel and erectile function run on the SAME safety supervisor. In this simulation, coordinated EES empties the model bladder at low pressure and keeps the dysreflexia proxy below its limit.</p>
       <span class="mod">AutonomicController → AutonomicCord → organ models</span></div>
     <div class="fl-card"><h3><span class="d"></span><span data-en="Learning &amp; recovery" data-ua="Навчання й відновлення">Learning &amp; recovery</span></h3>
       <p data-en="Between sessions: the adaptive Layer-4 controller, the advisor and autonomous GP-BO electrode mapping improve the patient-specific configuration and track progress over time." data-ua="Між сесіями: адаптивний контролер Шару 4, радник (advisor) і автономне GP-BO мапування електродів покращують індивідуальну конфігурацію й відстежують прогрес у часі.">Between sessions: the adaptive Layer-4 controller, the advisor and autonomous GP-BO electrode mapping improve the patient-specific configuration and track progress over time.</p>
@@ -349,7 +349,7 @@
       <p data-en="The correction. Feedback estimates gait state from sensors; the slow Layer-4 controller (a robust integral law, or a trainable policy) compensates fatigue and drift inside the safety envelope." data-ua="Корекція. Зворотний зв’язок оцінює стан ходи із сенсорів; повільний контролер Шару 4 (надійний інтегральний закон або научувана політика) компенсує втому й дрейф у межах безпеки.">The correction. Feedback estimates gait state from sensors; the slow Layer-4 controller (a robust integral law, or a trainable policy) compensates fatigue and drift inside the safety envelope.</p>
       <span class="mod">feedback.py · adaptation.py · learned_adaptation.py</span></div>
     <div class="fl-card"><h3><span class="d"></span><span data-en="AD Guardian" data-ua="Вартовий АД">AD Guardian</span></h3>
-      <p data-en="The life-safety watch. Predicts and prevents autonomic dysreflexia — a dangerous blood-pressure surge — driven by real organ state, tripping on dyssynergic high pressure, silent under coordinated voiding." data-ua="Сторож життєвої безпеки. Передбачає й запобігає автономній дисрефлексії — небезпечному стрибку тиску — на основі реального стану органів: спрацьовує на дисинергічному високому тиску, мовчить за скоординованого спорожнення.">The life-safety watch. Predicts and prevents autonomic dysreflexia — a dangerous blood-pressure surge — driven by real organ state, tripping on dyssynergic high pressure, silent under coordinated voiding.</p>
+      <p data-en="The life-safety watch. Forecasts a simulated autonomic-dysreflexia surge from the modelled organ state, tripping on dyssynergic high pressure, silent under coordinated voiding." data-ua="Сторож життєвої безпеки. Прогнозує змодельований стрибок тиску за станом моделі органів: спрацьовує на дисинергічному високому тиску, мовчить за скоординованого спорожнення.">The life-safety watch. Forecasts a simulated autonomic-dysreflexia surge from the modelled organ state, tripping on dyssynergic high pressure, silent under coordinated voiding.</p>
       <span class="mod">ad_guardian.py</span></div>
     <div class="fl-card"><h3><span class="d"></span><span data-en="Advisor &amp; Commentary (LLM)" data-ua="Радник і пояснення (LLM)">Advisor &amp; Commentary (LLM)</span></h3>
       <p data-en="The explainers. Between-session guidance and plain-language commentary for clinician and patient. These use language models — and they sit OUTSIDE the real-time loop, by design." data-ua="Пояснювачі. Поради між сесіями і коментар простою мовою для клініциста й пацієнта. Вони використовують мовні моделі — і стоять ПОЗА контуром реального часу, за задумом.">The explainers. Between-session guidance and plain-language commentary for clinician and patient. These use language models — and they sit OUTSIDE the real-time loop, by design.</p>
@@ -376,7 +376,7 @@
   <p class="sub" data-en="The path from a working simulation to the clinic. Green = done in this system; blue = the next build step; amber = needs a partner."
      data-ua="Шлях від робочої симуляції до клініки. Зелене — вже зроблено в цій системі; синє — наступний крок розробки; бурштинове — потребує партнера.">The path from a working simulation to the clinic. Green = done in this system; blue = the next build step; amber = needs a partner.</p>
   <div class="fl-card">
-    <div class="fl-step"><div class="s">1</div><div class="b"><b data-en="Simulation proof-of-concept" data-ua="Доказ концепції (симуляція)">Simulation proof-of-concept</b> <span class="fl-tag have" data-en="DONE" data-ua="ЗРОБЛЕНО">DONE</span><br><span data-en="Closed-loop control on a kinematic body, on dynamic MuJoCo physics, and on a validated OpenSim model (18 Hill muscles). 84 tests green, 16 exhaustive safety tests." data-ua="Замкнутий контур на кінематичному тілі, на динамічній фізиці MuJoCo і на валідованій моделі OpenSim (18 мʼязів Хілла). 84 тести зелені, 16 вичерпних safety-тестів.">Closed-loop control on a kinematic body, on dynamic MuJoCo physics, and on a validated OpenSim model (18 Hill muscles). 84 tests green, 16 exhaustive safety tests.</span></div></div>
+    <div class="fl-step"><div class="s">1</div><div class="b"><b data-en="Simulation proof-of-concept" data-ua="Доказ концепції (симуляція)">Simulation proof-of-concept</b> <span class="fl-tag have" data-en="DONE" data-ua="ЗРОБЛЕНО">DONE</span><br><span data-en="Closed-loop control on a kinematic body, on dynamic MuJoCo physics, and on a validated OpenSim model (18 Hill muscles). Automated test suite with exhaustive safety tests." data-ua="Замкнутий контур на кінематичному тілі, на динамічній фізиці MuJoCo і на валідованій моделі OpenSim (18 мʼязів Хілла). Автоматичні тести, зокрема вичерпні safety-тести.">Closed-loop control on a kinematic body, on dynamic MuJoCo physics, and on a validated OpenSim model (18 Hill muscles). Automated test suite with exhaustive safety tests.</span></div></div>
     <div class="fl-step"><div class="s">2</div><div class="b"><b data-en="Partner stimulation platform" data-ua="Стимуляційна платформа партнера">Partner stimulation platform</b> <span class="fl-tag need" data-en="PARTNER" data-ua="ПАРТНЕР">PARTNER</span><br><span data-en="Replace the software stimulator with real hardware — the partner platform — and real recruitment data and spinal-circuit models." data-ua="Замінити програмний стимулятор реальним залізом — платформою партнера — і реальними даними рекрутингу та моделями спінальних контурів.">Replace the software stimulator with real hardware — the partner platform — and real recruitment data and spinal-circuit models.</span></div></div>
     <div class="fl-step"><div class="s">3</div><div class="b"><b data-en="Cortical intent decoder" data-ua="Кортикальний декодер наміру">Cortical intent decoder</b> <span class="fl-tag need" data-en="PARTNER" data-ua="ПАРТНЕР">PARTNER</span><br><span data-en="Replace the scripted intent stub with a real ECoG cortical decoder (e.g. a cortical decoder) for voluntary, thought-driven control." data-ua="Замінити скриптовану заглушку наміру реальним кортикальним ECoG-декодером (напр. кортикальний декодер) для волевого, керованого думкою контролю.">Replace the scripted intent stub with a real ECoG cortical decoder (e.g. a cortical decoder) for voluntary, thought-driven control.</span></div></div>
     <div class="fl-step"><div class="s">4</div><div class="b"><b data-en="Human-in-the-loop approval" data-ua="Підтвердження людиною (лікарем)">Human-in-the-loop approval</b> <span class="fl-tag next" data-en="NEXT" data-ua="ДАЛІ">NEXT</span><br><span data-en="One clinician-facing flow: the system proposes an adaptation, the clinician approves, then it applies — making the «decision support, clinician decides» stance real in the UI." data-ua="Один клініцистський потік: система пропонує адаптацію, клініцист підтверджує, тоді вона застосовується — щоб позиція «підтримка рішень, вирішує клініцист» стала реальною в інтерфейсі.">One clinician-facing flow: the system proposes an adaptation, the clinician approves, then it applies — making the «decision support, clinician decides» stance real in the UI.</span></div></div>
@@ -768,8 +768,8 @@ table.ud td:nth-child(2){color:var(--mut);font-family:ui-monospace,monospace}
 <div class="wrap hide" id="guard">
   <div class="panel">
     <p style="color:var(--mut)"
-       data-en="UNIQUE (life-safety): <b>autonomic dysreflexia</b> — a sudden, deadly BP surge. The clinic treats it reactively. Our guardian <b>predicts</b> the attack by trend and <b>prevents</b> it early, 24/7."
-       data-ua="УНІКАЛЬНЕ (життя-безпека): <b>автономна дисрефлексія</b> — раптовий смертельний стрибок тиску. У клініці її лікують реактивно. Наш вартовий <b>прогнозує</b> напад і <b>запобігає</b> завчасно, 24/7.">UNIQUE (life-safety): <b>autonomic dysreflexia</b> — a sudden, deadly BP surge. The clinic treats it reactively. Our guardian <b>predicts</b> the attack by trend and <b>prevents</b> it early, 24/7.</p>
+       data-en="Simulation: <b>autonomic dysreflexia</b> is a sudden, dangerous BP surge. This model guardian <b>forecasts</b> the rise from the pressure trend and <b>starts an early void</b> in the model."
+       data-ua="Симуляція: <b>автономна дисрефлексія</b> — раптовий небезпечний стрибок тиску. Модельний вартовий <b>прогнозує</b> його за трендом і <b>запускає раннє спорожнення</b> в моделі.">Simulation: <b>autonomic dysreflexia</b> is a sudden, dangerous BP surge. This model guardian <b>forecasts</b> the rise from the pressure trend and <b>starts an early void</b> in the model.</p>
     <button id="runGuard">Run AD guardian</button>
     <div id="guardStatus" class="legend"></div>
     <div class="metrics" id="guardMetrics"></div>
@@ -839,8 +839,8 @@ table.ud td:nth-child(2){color:var(--mut);font-family:ui-monospace,monospace}
 <div class="wrap hide" id="programs">
   <div class="panel">
     <p style="color:var(--mut)"
-       data-en="<b>Your real stimulator programs</b> (the partner stimulator, tuned by the clinical partner). Columns: ↔ pulse width (µs), rate (Hz), amplitude (mA/V). <span style='color:#d29922'>confirm units with the clinical partner.</span>"
-       data-ua="<b>Реальні програми твого стимулятора</b> (the partner stimulator, the clinical partner). Колонки: ↔ тривалість імпульсу (µs), частота (Hz), амплітуда (mA/V). <span style='color:#d29922'>одиниці підтвердити у the clinical partner.</span>"><b>Your real stimulator programs</b> (the partner stimulator, tuned by the clinical partner). Columns: ↔ pulse width (µs), rate (Hz), amplitude (mA/V). <span style="color:#d29922">confirm units with the clinical partner.</span></p>
+       data-en="<b>Your real stimulator programs</b>, published by you. Auto-map uses a synthetic response model. Columns: ↔ pulse width (µs), rate (Hz), amplitude (mA/V). <span style='color:#d29922'>confirm units with the clinical partner.</span>"
+       data-ua="<b>Реальні програми твого стимулятора</b>, опубліковані тобою. Авто-мапінг працює на синтетичній моделі реакції. Колонки: ↔ тривалість імпульсу (µs), частота (Hz), амплітуда (mA/V). <span style='color:#d29922'>одиниці підтвердити у the clinical partner.</span>"><b>Your real stimulator programs</b>, published by you. Auto-map uses a synthetic response model. Columns: ↔ pulse width (µs), rate (Hz), amplitude (mA/V). <span style="color:#d29922">confirm units with the clinical partner.</span></p>
     <button id="runProg">Load my programs</button>
     <button id="runProgMap" style="background:#2b6cb0;color:#fff">Auto-map my programs (GP-BO)</button>
     <div class="metrics" id="progMetrics"></div>
@@ -1203,7 +1203,7 @@ async function loadFrontier(){
     tw.total_insilico_probes+(L?' проб':' probes'),
     L?('Перед-налаштування програм in-silico ДО клініки — '+tw.programs.length+' цілей, лікар доточнює'):('In-silico pre-optimisation BEFORE the clinic — '+tw.programs.length+' goals, clinician refines'),'neurostim_gym.py');
   if(gu&&gu.none&&gu.predictive) h+=card(ico('autonomic')+' '+(L?'Автономіка-перший':'Autonomic-first'),(L?'АКТИВНО':'LIVE'),'live',
-    (gu.none.metrics.ad_events)+' → '+(gu.predictive.metrics.ad_events),
+    (gu.none.metrics.ad_episodes)+' → '+(gu.predictive.metrics.ad_episodes),
     L?('Предиктивний вартовий автономної дисрефлексії (загроза життю): епізоди без керування → з керуванням. Нарівні з ходьбою'):('Predictive autonomic-dysreflexia guardian (life-threatening): episodes without → with control. On par with walking'),'ad_guardian.py · autonomic.py');
   if(tl) h+=card(ico('telemetry')+' '+(L?'Адаптер телеметрії':'Telemetry adapter'),(L?'ГОТОВО':'READY'),'ready',
     L?'тільки читання':'read-only',
@@ -1450,7 +1450,7 @@ $('#runAuto').onclick = async () => {
     metricCards($('#autoMetrics'), [
       {k:'peak pressure (cmH₂O)', v:d.metrics.peak_pressure},
       {k:'residual (mL)', v:d.metrics.residual_ml},
-      {k:'autonomic dysreflexia events', v:d.metrics.ad_events} ]);
+      {k:'autonomic dysreflexia episodes', v:d.metrics.ad_events} ]);
     agentTabComment('auto', d.metrics);
   } finally { b.disabled=false; b.textContent=tr('Run bladder simulation'); }
 };
@@ -1840,11 +1840,11 @@ $('#runGuard').onclick=async()=>{
   x.fillStyle=cols.reactive; x.fillText('● '+(ua?'реактивно':'reactive'),px0+150,MT-20);
   x.fillStyle=cols.predictive; x.fillText('● '+(ua?'предиктивний вартовий':'predictive guardian'),px0+270,MT-20);
   metricCards($('#guardMetrics'),[
-    {k:'AD events — none', v:d.none.metrics.ad_events},
-    {k:'AD events — reactive', v:d.reactive.metrics.ad_events},
-    {k:'AD events — predictive', v:d.predictive.metrics.ad_events},
+    {k:'AD episodes — none', v:d.none.metrics.ad_episodes},
+    {k:'AD episodes — reactive', v:d.reactive.metrics.ad_episodes},
+    {k:'AD episodes — predictive', v:d.predictive.metrics.ad_episodes},
     {k:'peak BP rise (predictive)', v:d.predictive.metrics.peak_bp_rise+' mmHg'} ]);
-  $('#guardStatus').textContent='predictive guardian prevents the AD surge (0 events) that reactive care misses';
+  $('#guardStatus').textContent='simulation: episodes above the BP-proxy limit under each policy';
   agentTabComment('guard', {});
 };
 
@@ -2512,8 +2512,8 @@ const STORY = [
    en:'<b>Validated model.</b> Not a cartoon — a validated OpenSim musculoskeletal model (18 Hill muscles, real bone). The legs move by muscle forces.',
    ua:'<b>Валідована модель.</b> Не мультик — валідована OpenSim-модель (18 м’язів Хілла, реальна кістка). Ноги рухають сили м’язів.'},
   {tab:'programs', run:()=>$('#runProg').click(),
-   en:'<b>Your real programs.</b> 20 programs from your stimulator (banks A/B/C). Clinician tunes them by hand in ~hours; the agent narrows it to ~minutes.',
-   ua:'<b>Твої реальні програми.</b> 20 програм твого стимулятора (групи A/B/C). Лікар підбирає годинами; агент звужує до хвилин.'},
+   en:'<b>Your real programs.</b> 20 programs from your stimulator (banks A/B/C). Auto-mapping here runs on a synthetic response model, not on your physiology.',
+   ua:'<b>Твої реальні програми.</b> 20 програм твого стимулятора (групи A/B/C). Авто-мапінг тут працює на синтетичній моделі реакції, а не на твоїй фізіології.'},
   {tab:'plate', run:()=>{ loadPlate().then(()=>{ $('#runPlan').click(); setTimeout(()=>$('#view3d').click(),200); }); },
    en:'<b>Electrode plate in 3D.</b> Your the 5-6-5 paddle array in the spine. Pick a goal — the right contacts light up and send a pulse to the legs.',
    ua:'<b>Пластина в 3D.</b> Твій паддл the 5-6-5 paddle array у хребті. Обери ціль — потрібні контакти спалахують і шлють імпульс до ніг.'},
@@ -2521,8 +2521,8 @@ const STORY = [
    en:'<b>Autonomous mapping.</b> The agent recovers the contact→muscle map by itself (GP-BO), in tens of probes instead of hundreds.',
    ua:'<b>Автономний мапінг.</b> Агент сам відновлює мапу контакт→м’яз (GP-BO) за десятки проб замість сотень.'},
   {tab:'guard', run:()=>$('#runGuard').click(),
-   en:'<b>Predictive safety.</b> The autonomic-dysreflexia guardian prevents the deadly BP surge: 0 episodes vs 377 uncontrolled. Life-safety, 24/7.',
-   ua:'<b>Предиктивна безпека.</b> Вартовий дисрефлексії запобігає смертельному стрибку тиску: 0 епізодів проти 377. Життя-безпека, 24/7.'},
+   en:'<b>Predictive safety.</b> Simulation: the guardian forecasts the BP-proxy rise and starts an early void in the model.',
+   ua:'<b>Предиктивна безпека.</b> Симуляція: вартовий прогнозує підйом проксі тиску й запускає раннє спорожнення в моделі.'},
   {tab:'autotrain', run:()=>$('#runAutotrain').click(),
    en:'<b>Scheduled training.</b> The stimulator trains the bladder every ~4 h: over 8 weeks residual falls and dysreflexia risk drops. Same idea for bowel & erectile.',
    ua:'<b>Планове тренування.</b> Стимулятор тренує міхур кожні ~4 год: за 8 тижнів залишок падає, ризик дисрефлексії знижується. Так само кишківник і ерекція.'},
@@ -2875,7 +2875,7 @@ $('#langBtn') && $('#langBtn').addEventListener('click', ()=>{ setTimeout(rerend
     'safety veto on every command':'src/bso/safety.py',
     'cpg phase-wise gait':'src/bso/orchestrator.py',
     'kinematic · mujoco · opensim bodies':'src/bso/biomech/kinematic.py,src/bso/biomech/mujoco_model.py,src/bso/biomech/opensim_model.py',
-    '84 tests green':'tests/test_safety.py',
+    'Automated tests in repo':'tests/test_safety.py',
     'the real frontier':'CLAUDE.md','not only walking':'src/bso/autonomic.py',
     "ukraine's unique edge":'CLAUDE.md','patient + architect':'README.md',
     'the ask':'CLAUDE.md','honest mock-vs-real':'src/bso/api_schema.py',

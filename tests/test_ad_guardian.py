@@ -17,9 +17,9 @@ def test_predictive_prevents_ad_vs_none_and_reactive():
     _, none = simulate("none")
     _, react = simulate("reactive")
     _, pred = simulate("predictive")
-    assert none["ad_events"] > 50            # unmanaged dyssynergia floods AD
-    assert pred["ad_events"] == 0            # predictive prevents it entirely
-    assert pred["ad_events"] < react["ad_events"]  # better than reactive
+    assert none["ad_episodes"] > 5           # unmanaged dyssynergia repeats episodes
+    assert pred["ad_episodes"] == 0          # predictive stays below the limit
+    assert pred["ad_episodes"] < react["ad_episodes"]  # better than reactive
     assert pred["peak_pressure"] < none["peak_pressure"]
 
 
@@ -29,4 +29,14 @@ def test_guardian_adapts_to_fill_rate():
     # faster filling -> the guardian warns at least as early (smaller/equal time)
     assert fast["first_warning_s"] is not None and slow["first_warning_s"] is not None
     assert fast["first_warning_s"] <= slow["first_warning_s"] + 1e-6
-    assert fast["ad_events"] == 0 and slow["ad_events"] == 0
+    assert fast["ad_episodes"] == 0 and slow["ad_episodes"] == 0
+
+
+def test_episode_metrics_converge_across_time_steps():
+    for policy in ("none", "reactive", "predictive"):
+        runs = [simulate(policy, dt=dt)[1] for dt in (0.25, 0.1, 0.05)]
+        assert len({m["ad_episodes"] for m in runs}) == 1, policy
+        seconds = [m["ad_seconds_above_limit"] for m in runs]
+        assert max(seconds) - min(seconds) <= 1.0, policy
+        peaks = [m["peak_bp_rise"] for m in runs]
+        assert max(peaks) - min(peaks) <= 1.0, policy
