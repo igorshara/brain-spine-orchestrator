@@ -23,7 +23,7 @@ export function mount(root) {
       h('div', { class: 'hero-copy' },
         h('h1', {}, t('Forgetting a remote should not cost five days.', 'Забутий пульт не має коштувати п’яти днів.')),
         h('p', { class: 'lead' }, t('I live with an implanted spinal stimulator. Once I left the remote behind and waited five to six days for it. Another time I forgot to switch the stimulator off. It ran for a long time and strong spasms followed.',
-          'Я живу з імплантованим спинальним стимулятором. Одного разу я забув пульт і чекав п’ять-шість днів, поки отримаю його. Іншого разу забув вимкнути стимулятор. Він довго працював, а потім почались сильні спазми.')),
+          'Я живу з імплантованим спинальним стимулятором. Одного разу я забув пульт і чекав на нього п’ять-шість днів. Іншого разу забув вимкнути стимулятор. Він довго працював, а потім почались сильні спазми.')),
         h('p', {}, t('Here are both days as you can play them, and how a controller could have handled them.',
           'Тут обидва ці дні можна програти і побачити, як із ними міг би впоратись пульт.')),
         h('div', { class: 'hero-actions' },
